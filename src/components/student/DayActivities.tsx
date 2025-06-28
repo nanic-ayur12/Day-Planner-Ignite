@@ -194,7 +194,7 @@ export const DayActivities: React.FC = () => {
 
     if (submission) {
       return (
-        <div className="mt-4 p-4 bg-green-50 border-2 border-green-200 rounded-lg">
+        <div className="mt-4 p-4 bg-green-50 border border-green-200 rounded-lg">
           <div className="flex items-center space-x-2">
             <CheckCircle className="h-5 w-5 text-green-600" />
             <span className="text-green-800 font-medium">Submitted Successfully</span>
@@ -222,7 +222,7 @@ export const DayActivities: React.FC = () => {
             <Input
               id={`file-${activity.id}`}
               type="file"
-              className="mt-1 border-2 border-gray-200 focus:border-blue-500"
+              className="mt-1 border border-gray-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
               onChange={(e) => {
                 const file = e.target.files?.[0];
                 if (file) {
@@ -260,7 +260,7 @@ export const DayActivities: React.FC = () => {
               id={`text-${activity.id}`}
               placeholder="Enter your response here..."
               rows={4}
-              className="mt-1 border-2 border-gray-200 focus:border-blue-500"
+              className="mt-1 border border-gray-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
               onChange={(e) => {
                 if (e.target.value.trim()) {
                   setTimeout(() => handleTextSubmission(activity.id, e.target.value), 1000);
@@ -282,7 +282,7 @@ export const DayActivities: React.FC = () => {
       {/* Header */}
       <div className="space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <h1 className="text-2xl lg:text-3xl font-bold text-gray-900">Today's Activities</h1>
+          <h1 className="text-3xl font-bold text-gray-900">Today's Activities</h1>
           <div className="flex items-center space-x-2">
             {renderPhaseIcon()}
             <Badge variant="secondary" className="text-sm bg-gray-100 text-gray-800">
@@ -293,7 +293,7 @@ export const DayActivities: React.FC = () => {
           </div>
         </div>
         
-        <Alert className="border-2 border-blue-200 bg-blue-50">
+        <Alert className="border border-blue-200 bg-blue-50">
           <Clock className="h-4 w-4" />
           <AlertDescription className="text-blue-800">
             {renderPhaseMessage()} • Current time: {currentTime.toLocaleTimeString()}
@@ -307,7 +307,7 @@ export const DayActivities: React.FC = () => {
               type="date"
               value={selectedDate}
               onChange={(e) => setSelectedDate(e.target.value)}
-              className="w-auto border-2 border-gray-200 focus:border-blue-500"
+              className="w-auto border border-gray-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
             />
           </div>
         </div>
@@ -316,7 +316,7 @@ export const DayActivities: React.FC = () => {
       {/* Activities Grid */}
       <div className="grid gap-6">
         {visibleActivities.length === 0 ? (
-          <Card className="border-2 border-gray-200 p-8 text-center">
+          <Card className="border border-gray-200 p-8 text-center">
             <CardContent>
               <Calendar className="h-12 w-12 text-gray-400 mx-auto mb-4" />
               <h3 className="text-lg font-medium text-gray-900 mb-2">No Activities Today</h3>
@@ -329,7 +329,7 @@ export const DayActivities: React.FC = () => {
             const submission = submissionData[activity.id];
             
             return (
-              <Card key={activity.id} className={`border-2 transition-all duration-300 hover:shadow-lg ${
+              <Card key={activity.id} className={`border transition-all duration-300 hover:shadow-md ${
                 status === 'ongoing' ? 'border-blue-500 bg-blue-50' :
                 status === 'completed' ? 'border-green-500 bg-green-50' : 
                 'border-gray-200 hover:border-gray-300'
@@ -372,7 +372,7 @@ export const DayActivities: React.FC = () => {
                     {timePhase === 'review' && (
                       <Dialog>
                         <DialogTrigger asChild>
-                          <Button variant="outline" size="sm" className="border-2 border-gray-200 hover:bg-gray-50">
+                          <Button variant="outline" size="sm" className="border border-gray-300 hover:bg-gray-50">
                             <Eye className="h-4 w-4 mr-2" />
                             View Details
                           </Button>

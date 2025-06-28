@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Loader2, Zap, GraduationCap, Shield, Info } from 'lucide-react';
+import { Loader2, Activity, GraduationCap, Shield, Info } from 'lucide-react';
 import { seedDatabase } from '@/lib/seedData';
 
 export const LoginPage: React.FC = () => {
@@ -84,23 +84,26 @@ export const LoginPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-white flex items-center justify-center p-4">
-      <div className="w-full max-w-md space-y-8">
+    <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
+      <div className="w-full max-w-md space-y-6">
         {/* Header */}
         <div className="text-center space-y-4">
           <div className="flex items-center justify-center space-x-3">
-            <div className="p-3 bg-blue-600 rounded-lg">
-              <Zap className="h-8 w-8 text-white" />
+            <div className="p-3 bg-indigo-600 rounded-xl">
+              <Activity className="h-8 w-8 text-white" />
             </div>
             <div className="text-left">
-              <h1 className="text-2xl font-bold text-gray-900">Ignite Day Planner</h1>
+              <h1 className="text-2xl font-bold text-gray-900">
+                Ignite Day Planner
+              </h1>
               <p className="text-sm text-gray-600">Kumaraguru College</p>
             </div>
           </div>
+          <p className="text-gray-600">Lead & Co-Lead Management System</p>
         </div>
 
         {/* Demo Credentials Info */}
-        <Card className="border-2 border-blue-200 bg-blue-50">
+        <Card className="border border-blue-200 bg-blue-50">
           <CardHeader className="pb-3">
             <CardTitle className="text-sm flex items-center space-x-2 text-blue-900">
               <Info className="h-4 w-4" />
@@ -134,7 +137,7 @@ export const LoginPage: React.FC = () => {
           </CardContent>
         </Card>
 
-        <Card className="border-2 border-gray-200">
+        <Card className="border border-gray-200 shadow-lg bg-white">
           <CardHeader className="space-y-1 text-center">
             <CardTitle className="text-xl text-gray-900">Welcome Back</CardTitle>
             <CardDescription className="text-gray-600">
@@ -164,7 +167,7 @@ export const LoginPage: React.FC = () => {
                       placeholder="Enter your roll number"
                       value={studentCredentials.rollNumber}
                       onChange={(e) => setStudentCredentials(prev => ({ ...prev, rollNumber: e.target.value }))}
-                      className="h-11 border-2 border-gray-200 focus:border-blue-500"
+                      className="h-11 border border-gray-300 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
                     />
                   </div>
                   <div className="space-y-2">
@@ -175,7 +178,7 @@ export const LoginPage: React.FC = () => {
                       placeholder="Enter your password"
                       value={studentCredentials.password}
                       onChange={(e) => setStudentCredentials(prev => ({ ...prev, password: e.target.value }))}
-                      className="h-11 border-2 border-gray-200 focus:border-blue-500"
+                      className="h-11 border border-gray-300 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
                     />
                   </div>
                   <Button 
@@ -183,13 +186,13 @@ export const LoginPage: React.FC = () => {
                     variant="outline"
                     size="sm"
                     onClick={() => fillDemoCredentials('student')}
-                    className="w-full border-2 border-gray-200 hover:bg-gray-50"
+                    className="w-full border border-gray-300 hover:bg-gray-50"
                   >
                     Fill Demo Credentials
                   </Button>
                   <Button 
                     type="submit" 
-                    className="w-full h-11 bg-blue-600 hover:bg-blue-700 text-white"
+                    className="w-full h-11 bg-indigo-600 hover:bg-indigo-700 text-white"
                     disabled={loading}
                   >
                     {loading ? (
@@ -212,7 +215,7 @@ export const LoginPage: React.FC = () => {
                       placeholder="Enter your email"
                       value={adminCredentials.email}
                       onChange={(e) => setAdminCredentials(prev => ({ ...prev, email: e.target.value }))}
-                      className="h-11 border-2 border-gray-200 focus:border-green-500"
+                      className="h-11 border border-gray-300 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
                     />
                   </div>
                   <div className="space-y-2">
@@ -223,7 +226,7 @@ export const LoginPage: React.FC = () => {
                       placeholder="Enter your password"
                       value={adminCredentials.password}
                       onChange={(e) => setAdminCredentials(prev => ({ ...prev, password: e.target.value }))}
-                      className="h-11 border-2 border-gray-200 focus:border-green-500"
+                      className="h-11 border border-gray-300 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
                     />
                   </div>
                   <Button 
@@ -231,13 +234,13 @@ export const LoginPage: React.FC = () => {
                     variant="outline"
                     size="sm"
                     onClick={() => fillDemoCredentials('admin')}
-                    className="w-full border-2 border-gray-200 hover:bg-gray-50"
+                    className="w-full border border-gray-300 hover:bg-gray-50"
                   >
                     Fill Demo Credentials
                   </Button>
                   <Button 
                     type="submit" 
-                    className="w-full h-11 bg-green-600 hover:bg-green-700 text-white"
+                    className="w-full h-11 bg-emerald-600 hover:bg-emerald-700 text-white"
                     disabled={loading}
                   >
                     {loading ? (
@@ -252,7 +255,7 @@ export const LoginPage: React.FC = () => {
             </Tabs>
 
             {error && (
-              <Alert className="mt-4 border-2 border-red-200 bg-red-50">
+              <Alert className="mt-4 border border-red-200 bg-red-50">
                 <AlertDescription className="text-red-800">{error}</AlertDescription>
               </Alert>
             )}

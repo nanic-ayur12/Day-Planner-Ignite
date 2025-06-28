@@ -9,6 +9,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
+import { Checkbox } from '@/components/ui/checkbox';
 import { 
   Users, 
   Plus, 
@@ -21,12 +22,17 @@ import {
   UserX,
   Shield,
   GraduationCap,
-  FileSpreadsheet
+  FileSpreadsheet,
+  Mail,
+  CheckCircle,
+  AlertCircle
 } from 'lucide-react';
 import { collection, addDoc, getDocs, updateDoc, deleteDoc, doc, query, where } from 'firebase/firestore';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { db, auth } from '@/lib/firebase';
 import { User, Brigade } from '@/types';
+import { sendWelcomeEmail, sendBulkWelcomeEmails } from '@/lib/emailService';
+import { generateStudentTemplate, generateAdminTemplate, parseStudentExcel, parseAdminExcel } from '@/lib/excelTemplates';
 
 export const UserManagement: React.FC = () => {
   const [users, setUsers] = useState<User[]>([]);
@@ -35,6 +41,7 @@ export const UserManagement: React.FC = () => {
   const [error, setError] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedRole, setSelectedRole] = useState<'ALL' | 'ADMIN' | 'STUDENT'>('ALL');
+  const [emailStatus, setEmailStatus] = useState<{ success: number; failed: number } | null>(null);
 
   const [userForm, setUserForm] = useState({
     name: '',
@@ -42,10 +49,13 @@ export const UserManagement: React.FC = () => {
     rollNumber: '',
     role: 'STUDENT' as 'ADMIN' | 'STUDENT',
     brigadeId: '',
-    password: ''
+    password: '',
+    sendWelcomeEmail: true
   });
 
   const [bulkUploadData, setBulkUploadData] = useState('');
+  const [bulkUploadFile, setBulkUploadFile] = useState<File | null>(null);
+  const [sendBulkEmails, setSendBulkEmails] = useState(true);
 
   useEffect(() => {
     fetchUsers();
@@ -117,13 +127,33 @@ export const UserManagement: React.FC = () => {
 
       await addDoc(collection(db, 'users'), { ...userData, id: userCredential.user.uid });
       
+      // Send welcome email if requested
+      if (userForm.sendWelcomeEmail) {
+        const emailData = {
+          name: userForm.name,
+          email: email,
+          role: userForm.role,
+          rollNumber: userForm.role === 'STUDENT' ? userForm.rollNumber : undefined,
+          brigadeName: selectedBrigade?.name,
+          password: userForm.password
+        };
+        
+        const emailSent = await sendWelcomeEmail(emailData);
+        if (emailSent) {
+          setEmailStatus({ success: 1, failed: 0 });
+        } else {
+          setEmailStatus({ success: 0, failed: 1 });
+        }
+      }
+      
       setUserForm({
         name: '',
         email: '',
         rollNumber: '',
         role: 'STUDENT',
         brigadeId: '',
-        password: ''
+        password: '',
+        sendWelcomeEmail: true
       });
       
       fetchUsers();
@@ -136,26 +166,50 @@ export const UserManagement: React.FC = () => {
   };
 
   const handleBulkUpload = async () => {
-    if (!bulkUploadData.trim()) {
-      setError('Please enter CSV data');
+    if (!bulkUploadFile && !bulkUploadData.trim()) {
+      setError('Please upload a file or enter CSV data');
       return;
     }
 
     setLoading(true);
     setError('');
+    setEmailStatus(null);
 
     try {
-      const lines = bulkUploadData.trim().split('\n');
-      const headers = lines[0].split(',').map(h => h.trim());
-      
-      for (let i = 1; i < lines.length; i++) {
-        const values = lines[i].split(',').map(v => v.trim());
-        const userData: any = {};
-        
-        headers.forEach((header, index) => {
-          userData[header] = values[index];
-        });
+      let usersToCreate: any[] = [];
 
+      if (bulkUploadFile) {
+        // Handle Excel file upload
+        if (bulkUploadFile.name.endsWith('.xlsx') || bulkUploadFile.name.endsWith('.xls')) {
+          if (userForm.role === 'STUDENT') {
+            usersToCreate = await parseStudentExcel(bulkUploadFile);
+          } else {
+            usersToCreate = await parseAdminExcel(bulkUploadFile);
+          }
+        } else {
+          setError('Please upload a valid Excel file (.xlsx or .xls)');
+          return;
+        }
+      } else {
+        // Handle CSV data
+        const lines = bulkUploadData.trim().split('\n');
+        const headers = lines[0].split(',').map(h => h.trim());
+        
+        for (let i = 1; i < lines.length; i++) {
+          const values = lines[i].split(',').map(v => v.trim());
+          const userData: any = {};
+          
+          headers.forEach((header, index) => {
+            userData[header] = values[index];
+          });
+          
+          usersToCreate.push(userData);
+        }
+      }
+
+      const emailsToSend: any[] = [];
+
+      for (const userData of usersToCreate) {
         if (userData.role === 'STUDENT' && userData.rollNumber) {
           const email = `${userData.rollNumber}@student.ignite.edu`;
           const password = userData.password || 'student123';
@@ -177,13 +231,59 @@ export const UserManagement: React.FC = () => {
             };
             
             await addDoc(collection(db, 'users'), userDoc);
+
+            if (sendBulkEmails) {
+              emailsToSend.push({
+                name: userData.name,
+                email: email,
+                role: 'STUDENT',
+                rollNumber: userData.rollNumber,
+                brigadeName: userData.brigadeName,
+                password: password
+              });
+            }
           } catch (error) {
             console.error(`Error creating user ${userData.rollNumber}:`, error);
           }
+        } else if (userData.role === 'ADMIN' && userData.email) {
+          const password = userData.password || 'admin123';
+          
+          try {
+            const userCredential = await createUserWithEmailAndPassword(auth, userData.email, password);
+            
+            const userDoc = {
+              id: userCredential.user.uid,
+              name: userData.name,
+              email: userData.email,
+              role: 'ADMIN',
+              createdAt: new Date(),
+              isActive: true
+            };
+            
+            await addDoc(collection(db, 'users'), userDoc);
+
+            if (sendBulkEmails) {
+              emailsToSend.push({
+                name: userData.name,
+                email: userData.email,
+                role: 'ADMIN',
+                password: password
+              });
+            }
+          } catch (error) {
+            console.error(`Error creating admin ${userData.email}:`, error);
+          }
         }
+      }
+
+      // Send bulk emails if requested
+      if (sendBulkEmails && emailsToSend.length > 0) {
+        const emailResult = await sendBulkWelcomeEmails(emailsToSend);
+        setEmailStatus(emailResult);
       }
       
       setBulkUploadData('');
+      setBulkUploadFile(null);
       fetchUsers();
     } catch (error) {
       console.error('Error bulk uploading users:', error);
@@ -225,74 +325,131 @@ export const UserManagement: React.FC = () => {
     return matchesSearch && matchesRole;
   });
 
-  const generateCSVTemplate = () => {
-    const template = `name,rollNumber,brigadeName,password
-John Doe,CS2021001,Alpha Brigade,student123
-Jane Smith,CS2021002,Beta Brigade,student123`;
-    
-    const blob = new Blob([template], { type: 'text/csv' });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'student_upload_template.csv';
-    a.click();
-    window.URL.revokeObjectURL(url);
-  };
-
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold text-gray-900">User Management</h1>
-        <div className="flex items-center space-x-2">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900">User Management</h1>
+          <p className="text-gray-600 mt-1">Manage admin and student accounts</p>
+        </div>
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
           <Dialog>
             <DialogTrigger asChild>
-              <Button variant="outline">
+              <Button variant="outline" className="border-indigo-200 text-indigo-600 hover:bg-indigo-50">
                 <Upload className="h-4 w-4 mr-2" />
                 Bulk Upload
               </Button>
             </DialogTrigger>
-            <DialogContent className="max-w-2xl">
+            <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
               <DialogHeader>
-                <DialogTitle>Bulk Upload Users</DialogTitle>
+                <DialogTitle className="flex items-center space-x-2">
+                  <Upload className="h-5 w-5 text-indigo-600" />
+                  <span>Bulk Upload Users</span>
+                </DialogTitle>
                 <DialogDescription>
-                  Upload multiple students using CSV format
+                  Upload multiple users using Excel files or CSV format
                 </DialogDescription>
               </DialogHeader>
-              <div className="space-y-4">
-                <div className="flex items-center space-x-2">
-                  <Button variant="outline" size="sm" onClick={generateCSVTemplate}>
-                    <Download className="h-4 w-4 mr-2" />
-                    Download Template
+              <Tabs defaultValue="excel" className="w-full">
+                <TabsList className="grid w-full grid-cols-2">
+                  <TabsTrigger value="excel">Excel Upload</TabsTrigger>
+                  <TabsTrigger value="csv">CSV Data</TabsTrigger>
+                </TabsList>
+                
+                <TabsContent value="excel" className="space-y-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <Button 
+                      variant="outline" 
+                      onClick={generateStudentTemplate}
+                      className="h-20 flex-col space-y-2 border-green-200 hover:bg-green-50"
+                    >
+                      <FileSpreadsheet className="h-6 w-6 text-green-600" />
+                      <span>Download Student Template</span>
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      onClick={generateAdminTemplate}
+                      className="h-20 flex-col space-y-2 border-blue-200 hover:bg-blue-50"
+                    >
+                      <FileSpreadsheet className="h-6 w-6 text-blue-600" />
+                      <span>Download Admin Template</span>
+                    </Button>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="excelFile">Upload Excel File</Label>
+                    <Input
+                      id="excelFile"
+                      type="file"
+                      accept=".xlsx,.xls"
+                      onChange={(e) => setBulkUploadFile(e.target.files?.[0] || null)}
+                      className="border-2 border-dashed border-gray-300 hover:border-indigo-400"
+                    />
+                  </div>
+                  
+                  <div className="flex items-center space-x-2">
+                    <Checkbox 
+                      id="sendBulkEmails" 
+                      checked={sendBulkEmails}
+                      onCheckedChange={(checked) => setSendBulkEmails(checked as boolean)}
+                    />
+                    <Label htmlFor="sendBulkEmails" className="flex items-center space-x-2">
+                      <Mail className="h-4 w-4" />
+                      <span>Send welcome emails to all users</span>
+                    </Label>
+                  </div>
+                  
+                  <Button onClick={handleBulkUpload} disabled={loading || !bulkUploadFile} className="w-full bg-indigo-600 hover:bg-indigo-700">
+                    {loading ? 'Uploading...' : 'Upload Users'}
                   </Button>
-                  <span className="text-sm text-gray-600">Download CSV template to get started</span>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="csvData">CSV Data</Label>
-                  <Textarea
-                    id="csvData"
-                    value={bulkUploadData}
-                    onChange={(e) => setBulkUploadData(e.target.value)}
-                    placeholder="Paste your CSV data here..."
-                    rows={10}
-                    className="font-mono text-sm"
-                  />
-                </div>
-                <Button onClick={handleBulkUpload} disabled={loading} className="w-full">
-                  {loading ? 'Uploading...' : 'Upload Users'}
-                </Button>
-              </div>
+                </TabsContent>
+                
+                <TabsContent value="csv" className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="csvData">CSV Data</Label>
+                    <Textarea
+                      id="csvData"
+                      value={bulkUploadData}
+                      onChange={(e) => setBulkUploadData(e.target.value)}
+                      placeholder="name,rollNumber,brigadeName,password&#10;John Doe,CS2021001,Alpha Brigade,student123&#10;Jane Smith,CS2021002,Beta Brigade,student123"
+                      rows={10}
+                      className="font-mono text-sm"
+                    />
+                  </div>
+                  
+                  <div className="flex items-center space-x-2">
+                    <Checkbox 
+                      id="sendBulkEmailsCSV" 
+                      checked={sendBulkEmails}
+                      onCheckedChange={(checked) => setSendBulkEmails(checked as boolean)}
+                    />
+                    <Label htmlFor="sendBulkEmailsCSV" className="flex items-center space-x-2">
+                      <Mail className="h-4 w-4" />
+                      <span>Send welcome emails to all users</span>
+                    </Label>
+                  </div>
+                  
+                  <Button onClick={handleBulkUpload} disabled={loading || !bulkUploadData.trim()} className="w-full bg-indigo-600 hover:bg-indigo-700">
+                    {loading ? 'Uploading...' : 'Upload Users'}
+                  </Button>
+                </TabsContent>
+              </Tabs>
             </DialogContent>
           </Dialog>
+          
           <Dialog>
             <DialogTrigger asChild>
-              <Button className="bg-blue-600 hover:bg-blue-700">
+              <Button className="bg-indigo-600 hover:bg-indigo-700 text-white">
                 <Plus className="h-4 w-4 mr-2" />
                 Add User
               </Button>
             </DialogTrigger>
-            <DialogContent>
+            <DialogContent className="max-w-md">
               <DialogHeader>
-                <DialogTitle>Add New User</DialogTitle>
+                <DialogTitle className="flex items-center space-x-2">
+                  <Plus className="h-5 w-5 text-indigo-600" />
+                  <span>Add New User</span>
+                </DialogTitle>
                 <DialogDescription>
                   Create a new admin or student account
                 </DialogDescription>
@@ -305,6 +462,7 @@ Jane Smith,CS2021002,Beta Brigade,student123`;
                     value={userForm.name}
                     onChange={(e) => setUserForm(prev => ({ ...prev, name: e.target.value }))}
                     placeholder="Enter full name"
+                    className="border-gray-300 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
                   />
                 </div>
                 <div className="space-y-2">
@@ -329,6 +487,7 @@ Jane Smith,CS2021002,Beta Brigade,student123`;
                       value={userForm.email}
                       onChange={(e) => setUserForm(prev => ({ ...prev, email: e.target.value }))}
                       placeholder="Enter email address"
+                      className="border-gray-300 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
                     />
                   </div>
                 ) : (
@@ -340,6 +499,7 @@ Jane Smith,CS2021002,Beta Brigade,student123`;
                         value={userForm.rollNumber}
                         onChange={(e) => setUserForm(prev => ({ ...prev, rollNumber: e.target.value }))}
                         placeholder="Enter roll number"
+                        className="border-gray-300 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
                       />
                     </div>
                     <div className="space-y-2">
@@ -368,9 +528,23 @@ Jane Smith,CS2021002,Beta Brigade,student123`;
                     value={userForm.password}
                     onChange={(e) => setUserForm(prev => ({ ...prev, password: e.target.value }))}
                     placeholder="Enter password"
+                    className="border-gray-300 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
                   />
                 </div>
-                <Button type="submit" disabled={loading} className="w-full">
+                
+                <div className="flex items-center space-x-2">
+                  <Checkbox 
+                    id="sendWelcomeEmail" 
+                    checked={userForm.sendWelcomeEmail}
+                    onCheckedChange={(checked) => setUserForm(prev => ({ ...prev, sendWelcomeEmail: checked as boolean }))}
+                  />
+                  <Label htmlFor="sendWelcomeEmail" className="flex items-center space-x-2">
+                    <Mail className="h-4 w-4" />
+                    <span>Send welcome email</span>
+                  </Label>
+                </div>
+                
+                <Button type="submit" disabled={loading} className="w-full bg-indigo-600 hover:bg-indigo-700">
                   {loading ? 'Creating...' : 'Create User'}
                 </Button>
               </form>
@@ -381,17 +555,30 @@ Jane Smith,CS2021002,Beta Brigade,student123`;
 
       {error && (
         <Alert className="border-red-200 bg-red-50">
+          <AlertCircle className="h-4 w-4" />
           <AlertDescription className="text-red-800">{error}</AlertDescription>
         </Alert>
       )}
 
+      {emailStatus && (
+        <Alert className="border-green-200 bg-green-50">
+          <CheckCircle className="h-4 w-4" />
+          <AlertDescription className="text-green-800">
+            Email Status: {emailStatus.success} sent successfully, {emailStatus.failed} failed
+          </AlertDescription>
+        </Alert>
+      )}
+
       {/* Filters */}
-      <Card>
+      <Card className="border border-gray-200">
         <CardHeader>
-          <CardTitle className="text-lg">Filters</CardTitle>
+          <CardTitle className="text-lg flex items-center space-x-2">
+            <Search className="h-5 w-5 text-indigo-600" />
+            <span>Filters</span>
+          </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="flex items-center space-x-4">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4">
             <div className="flex-1">
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
@@ -399,12 +586,12 @@ Jane Smith,CS2021002,Beta Brigade,student123`;
                   placeholder="Search users..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10"
+                  className="pl-10 border-gray-300 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
                 />
               </div>
             </div>
             <Select value={selectedRole} onValueChange={(value: 'ALL' | 'ADMIN' | 'STUDENT') => setSelectedRole(value)}>
-              <SelectTrigger className="w-40">
+              <SelectTrigger className="w-full sm:w-40">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -420,7 +607,7 @@ Jane Smith,CS2021002,Beta Brigade,student123`;
       {/* Users List */}
       <div className="grid gap-4">
         {filteredUsers.length === 0 ? (
-          <Card className="p-8 text-center">
+          <Card className="p-8 text-center border border-gray-200">
             <CardContent>
               <Users className="h-12 w-12 text-gray-400 mx-auto mb-4" />
               <h3 className="text-lg font-medium text-gray-900 mb-2">No Users Found</h3>
@@ -429,29 +616,32 @@ Jane Smith,CS2021002,Beta Brigade,student123`;
           </Card>
         ) : (
           filteredUsers.map((user) => (
-            <Card key={user.id} className="hover:shadow-lg transition-shadow">
+            <Card key={user.id} className="hover:shadow-md transition-shadow border border-gray-200">
               <CardHeader>
-                <div className="flex items-start justify-between">
-                  <div className="space-y-2">
+                <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
+                  <div className="space-y-2 flex-1">
                     <div className="flex items-center space-x-3">
-                      <div className={`p-2 rounded-full ${user.role === 'ADMIN' ? 'bg-purple-100' : 'bg-blue-100'}`}>
+                      <div className={`p-3 rounded-xl ${user.role === 'ADMIN' ? 'bg-purple-50' : 'bg-blue-50'}`}>
                         {user.role === 'ADMIN' ? 
-                          <Shield className={`h-4 w-4 ${user.role === 'ADMIN' ? 'text-purple-600' : 'text-blue-600'}`} /> :
-                          <GraduationCap className="h-4 w-4 text-blue-600" />
+                          <Shield className={`h-5 w-5 ${user.role === 'ADMIN' ? 'text-purple-600' : 'text-blue-600'}`} /> :
+                          <GraduationCap className="h-5 w-5 text-blue-600" />
                         }
                       </div>
-                      <div>
-                        <CardTitle className="text-lg">{user.name}</CardTitle>
-                        <CardDescription>
+                      <div className="flex-1 min-w-0">
+                        <CardTitle className="text-lg truncate">{user.name}</CardTitle>
+                        <CardDescription className="truncate">
                           {user.role === 'ADMIN' ? user.email : `${user.rollNumber} • ${user.brigadeName}`}
                         </CardDescription>
                       </div>
                     </div>
-                    <div className="flex items-center space-x-2">
-                      <Badge variant={user.role === 'ADMIN' ? 'default' : 'secondary'}>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <Badge 
+                        variant={user.role === 'ADMIN' ? 'default' : 'secondary'}
+                        className={user.role === 'ADMIN' ? 'bg-purple-100 text-purple-800' : 'bg-blue-100 text-blue-800'}
+                      >
                         {user.role}
                       </Badge>
-                      <Badge variant={user.isActive ? 'default' : 'destructive'}>
+                      <Badge variant={user.isActive ? 'default' : 'destructive'} className={user.isActive ? 'bg-green-100 text-green-800' : ''}>
                         {user.isActive ? 'Active' : 'Inactive'}
                       </Badge>
                       <span className="text-sm text-gray-500">
@@ -464,6 +654,7 @@ Jane Smith,CS2021002,Beta Brigade,student123`;
                       variant="outline"
                       size="sm"
                       onClick={() => toggleUserStatus(user.id, user.isActive)}
+                      className="border-gray-200 hover:bg-gray-50"
                     >
                       {user.isActive ? <UserX className="h-4 w-4" /> : <UserCheck className="h-4 w-4" />}
                     </Button>
@@ -471,6 +662,7 @@ Jane Smith,CS2021002,Beta Brigade,student123`;
                       variant="outline"
                       size="sm"
                       onClick={() => handleDeleteUser(user.id)}
+                      className="border-red-200 text-red-600 hover:bg-red-50"
                     >
                       <Trash2 className="h-4 w-4" />
                     </Button>
@@ -483,8 +675,8 @@ Jane Smith,CS2021002,Beta Brigade,student123`;
       </div>
 
       {/* Statistics */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card>
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <Card className="border border-gray-200">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-gray-600">Total Users</CardTitle>
           </CardHeader>
@@ -492,28 +684,28 @@ Jane Smith,CS2021002,Beta Brigade,student123`;
             <div className="text-2xl font-bold">{users.length}</div>
           </CardContent>
         </Card>
-        <Card>
+        <Card className="border border-gray-200">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-gray-600">Students</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{users.filter(u => u.role === 'STUDENT').length}</div>
+            <div className="text-2xl font-bold text-blue-600">{users.filter(u => u.role === 'STUDENT').length}</div>
           </CardContent>
         </Card>
-        <Card>
+        <Card className="border border-gray-200">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-gray-600">Admins</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{users.filter(u => u.role === 'ADMIN').length}</div>
+            <div className="text-2xl font-bold text-purple-600">{users.filter(u => u.role === 'ADMIN').length}</div>
           </CardContent>
         </Card>
-        <Card>
+        <Card className="border border-gray-200">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-gray-600">Active Users</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{users.filter(u => u.isActive).length}</div>
+            <div className="text-2xl font-bold text-green-600">{users.filter(u => u.isActive).length}</div>
           </CardContent>
         </Card>
       </div>
