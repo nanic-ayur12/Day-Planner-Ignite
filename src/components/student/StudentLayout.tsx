@@ -11,12 +11,12 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { LogOut, Activity, Calendar, FileText, BarChart3, Menu, X } from 'lucide-react';
+import { LogOut, Activity, Calendar, FileText, BarChart3, Menu, X, Bell, User } from 'lucide-react';
 
 const navigationItems = [
-  { icon: Calendar, label: 'Activities', path: '/student' },
-  { icon: FileText, label: 'My Submissions', path: '/student/submissions' },
-  { icon: BarChart3, label: 'Dashboard', path: '/student/dashboard' },
+  { icon: Calendar, label: 'Activities', path: '/student', color: 'text-blue-600' },
+  { icon: FileText, label: 'My Submissions', path: '/student/submissions', color: 'text-emerald-600' },
+  { icon: BarChart3, label: 'Dashboard', path: '/student/dashboard', color: 'text-purple-600' },
 ];
 
 export const StudentLayout: React.FC = () => {
@@ -39,16 +39,16 @@ export const StudentLayout: React.FC = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <header className="bg-white border-b border-gray-200 sticky top-0 z-50">
+      <header className="bg-white border-b border-gray-200 sticky top-0 z-50 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
+          <div className="flex items-center justify-between h-20">
             {/* Logo and Title */}
-            <div className="flex items-center space-x-3">
-              <div className="p-2 bg-indigo-600 rounded-lg">
-                <Activity className="h-5 w-5 text-white" />
+            <div className="flex items-center space-x-4">
+              <div className="p-2 bg-gradient-to-r from-purple-600 to-blue-600 rounded-xl">
+                <Activity className="h-6 w-6 text-white" />
               </div>
               <div className="hidden sm:block">
-                <h1 className="text-lg font-bold text-gray-900">
+                <h1 className="text-xl font-bold text-gray-900">
                   Ignite Day Planner
                 </h1>
                 <p className="text-xs text-gray-600">Student Portal</p>
@@ -56,21 +56,21 @@ export const StudentLayout: React.FC = () => {
             </div>
 
             {/* Desktop Navigation */}
-            <nav className="hidden md:flex items-center space-x-1">
+            <nav className="hidden md:flex items-center space-x-2">
               {navigationItems.map((item) => (
                 <Button
                   key={item.path}
-                  variant={location.pathname === item.path ? "default" : "ghost"}
+                  variant="ghost"
                   size="sm"
                   onClick={() => navigate(item.path)}
-                  className={`flex items-center space-x-2 ${
+                  className={`flex items-center space-x-2 h-12 px-4 rounded-xl transition-all duration-200 ${
                     location.pathname === item.path 
-                      ? 'bg-indigo-600 text-white hover:bg-indigo-700' 
+                      ? 'bg-gradient-to-r from-purple-50 to-blue-50 text-purple-700 border border-purple-200' 
                       : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
                   }`}
                 >
-                  <item.icon className="h-4 w-4" />
-                  <span>{item.label}</span>
+                  <item.icon className={`h-5 w-5 ${location.pathname === item.path ? 'text-purple-600' : item.color}`} />
+                  <span className="font-medium">{item.label}</span>
                 </Button>
               ))}
             </nav>
@@ -82,37 +82,48 @@ export const StudentLayout: React.FC = () => {
                 variant="ghost"
                 size="sm"
                 onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                className="md:hidden"
+                className="md:hidden rounded-lg"
               >
-                {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+                {mobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+              </Button>
+
+              {/* Notifications */}
+              <Button variant="ghost" size="sm" className="rounded-lg relative hidden sm:flex">
+                <Bell className="h-5 w-5" />
+                <span className="absolute -top-1 -right-1 h-3 w-3 bg-red-500 rounded-full"></span>
               </Button>
 
               {/* User info and menu */}
               <div className="flex items-center space-x-3">
                 <div className="text-right hidden sm:block">
-                  <p className="text-sm font-medium text-gray-900">{userProfile?.name}</p>
+                  <p className="text-sm font-semibold text-gray-900">{userProfile?.name}</p>
                   <p className="text-xs text-gray-500">{userProfile?.brigadeName}</p>
                 </div>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" className="h-10 w-10 rounded-full">
-                      <Avatar className="h-8 w-8">
-                        <AvatarFallback className="bg-indigo-600 text-white text-sm">
+                    <Button variant="ghost" className="h-12 w-12 rounded-xl">
+                      <Avatar className="h-10 w-10">
+                        <AvatarFallback className="bg-gradient-to-r from-purple-600 to-blue-600 text-white text-sm font-semibold">
                           {userProfile?.name?.charAt(0)?.toUpperCase() || 'S'}
                         </AvatarFallback>
                       </Avatar>
                     </Button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent className="w-56" align="end">
+                  <DropdownMenuContent className="w-64" align="end">
                     <DropdownMenuLabel className="font-normal">
                       <div className="flex flex-col space-y-1">
-                        <p className="text-sm font-medium text-gray-900">{userProfile?.name}</p>
+                        <p className="text-sm font-semibold text-gray-900">{userProfile?.name}</p>
                         <p className="text-xs text-gray-600">Roll: {userProfile?.rollNumber}</p>
                         <p className="text-xs text-gray-600">Brigade: {userProfile?.brigadeName}</p>
+                        <div className="flex items-center space-x-2 mt-2">
+                          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                            Student
+                          </span>
+                        </div>
                       </div>
                     </DropdownMenuLabel>
                     <DropdownMenuSeparator />
-                    <DropdownMenuItem onClick={handleLogout} className="text-red-600">
+                    <DropdownMenuItem onClick={handleLogout} className="text-red-600 focus:text-red-600">
                       <LogOut className="mr-2 h-4 w-4" />
                       <span>Log out</span>
                     </DropdownMenuItem>
@@ -124,15 +135,15 @@ export const StudentLayout: React.FC = () => {
 
           {/* Mobile Navigation */}
           {mobileMenuOpen && (
-            <div className="md:hidden border-t border-gray-200 py-3">
-              <nav className="space-y-1">
+            <div className="md:hidden border-t border-gray-200 py-4">
+              <nav className="space-y-2">
                 {navigationItems.map((item) => (
                   <Button
                     key={item.path}
-                    variant={location.pathname === item.path ? "default" : "ghost"}
-                    className={`w-full justify-start ${
+                    variant="ghost"
+                    className={`w-full justify-start h-12 rounded-xl ${
                       location.pathname === item.path 
-                        ? 'bg-indigo-600 text-white hover:bg-indigo-700' 
+                        ? 'bg-gradient-to-r from-purple-50 to-blue-50 text-purple-700 border border-purple-200' 
                         : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
                     }`}
                     onClick={() => {
@@ -140,8 +151,8 @@ export const StudentLayout: React.FC = () => {
                       setMobileMenuOpen(false);
                     }}
                   >
-                    <item.icon className="h-4 w-4 mr-3" />
-                    {item.label}
+                    <item.icon className={`h-5 w-5 mr-3 ${location.pathname === item.path ? 'text-purple-600' : item.color}`} />
+                    <span className="font-medium">{item.label}</span>
                   </Button>
                 ))}
               </nav>
@@ -152,13 +163,13 @@ export const StudentLayout: React.FC = () => {
 
       {/* Page Title */}
       <div className="bg-white border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
-              <h2 className="text-xl font-semibold text-gray-900">
+              <h2 className="text-2xl font-bold text-gray-900">
                 {currentPage?.label || 'Student Portal'}
               </h2>
-              <p className="text-sm text-gray-500">
+              <p className="text-sm text-gray-500 mt-1">
                 {new Date().toLocaleDateString('en-US', { 
                   weekday: 'long', 
                   year: 'numeric', 
@@ -168,7 +179,7 @@ export const StudentLayout: React.FC = () => {
               </p>
             </div>
             <div className="text-left sm:text-right">
-              <p className="text-sm font-medium text-gray-900">{userProfile?.name}</p>
+              <p className="text-sm font-semibold text-gray-900">{userProfile?.name}</p>
               <p className="text-xs text-gray-500">{userProfile?.brigadeName}</p>
             </div>
           </div>
@@ -176,7 +187,7 @@ export const StudentLayout: React.FC = () => {
       </div>
 
       {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <Outlet />
       </main>
     </div>
