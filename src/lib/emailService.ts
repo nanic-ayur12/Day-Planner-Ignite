@@ -25,14 +25,14 @@ interface EmailConfig {
 const getEmailConfig = (): EmailConfig => {
   // Check for environment variables first, then fallback to defaults
   return {
-    host: process.env.SMTP_HOST || 'smtp.office365.com',
+    host: process.env.SMTP_HOST || '',
     port: parseInt(process.env.SMTP_PORT || '587'),
     secure: process.env.SMTP_SECURE === 'true' || false,
     auth: {
-      user: process.env.SMTP_USER || 'ignite@kct.ac.in',
-      pass: process.env.SMTP_PASS || 'nlngykmbqkbzjpww'
+      user: process.env.SMTP_USER || '',
+      pass: process.env.SMTP_PASS || ''
     },
-    from: process.env.SMTP_FROM || 'ignite@kct.ac.in'
+    from: process.env.SMTP_FROM || ''
   };
 };
 
