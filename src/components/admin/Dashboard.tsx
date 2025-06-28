@@ -16,81 +16,191 @@ import {
   ArrowUpRight,
   ArrowDownRight,
   Plus,
-  Eye
+  Eye,
+  TrendingDown
 } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, PieChart, Pie, Cell, AreaChart, Area } from 'recharts';
-
-const dashboardStats = [
-  { 
-    title: 'Total Events', 
-    value: '2', 
-    change: '+0%', 
-    trend: 'neutral',
-    description: 'Active events', 
-    icon: Calendar, 
-    bgColor: 'bg-blue-50',
-    iconColor: 'text-blue-600',
-    borderColor: 'border-blue-200'
-  },
-  { 
-    title: 'Brigade Leads', 
-    value: '0', 
-    change: '+0%', 
-    trend: 'neutral',
-    description: 'Registered leads', 
-    icon: Users, 
-    bgColor: 'bg-emerald-50',
-    iconColor: 'text-emerald-600',
-    borderColor: 'border-emerald-200'
-  },
-  { 
-    title: 'Total Submissions', 
-    value: '0', 
-    change: '+0%', 
-    trend: 'neutral',
-    description: 'Records submitted', 
-    icon: FileText, 
-    bgColor: 'bg-purple-50',
-    iconColor: 'text-purple-600',
-    borderColor: 'border-purple-200'
-  },
-  { 
-    title: 'Completion Rate', 
-    value: '0%', 
-    change: '+0%', 
-    trend: 'neutral',
-    description: 'Overall progress', 
-    icon: Target, 
-    bgColor: 'bg-orange-50',
-    iconColor: 'text-orange-600',
-    borderColor: 'border-orange-200'
-  },
-];
-
-const recentActivities = [
-  { action: 'System initialized', user: 'Admin User', time: '2 hours ago', type: 'system', icon: Activity },
-  { action: 'Event plan template created', user: 'Admin User', time: '3 hours ago', type: 'event', icon: Calendar },
-  { action: 'User management setup', user: 'Admin User', time: '4 hours ago', type: 'users', icon: Users },
-  { action: 'Analytics dashboard configured', user: 'Admin User', time: '5 hours ago', type: 'analytics', icon: BarChart3 },
-];
-
-const chartData = [
-  { name: 'Mon', submissions: 0, events: 0 },
-  { name: 'Tue', submissions: 0, events: 0 },
-  { name: 'Wed', submissions: 0, events: 1 },
-  { name: 'Thu', submissions: 0, events: 1 },
-  { name: 'Fri', submissions: 0, events: 2 },
-  { name: 'Sat', submissions: 0, events: 2 },
-  { name: 'Sun', submissions: 0, events: 2 },
-];
+import { collection, getDocs, query, where } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
+import { User, Submission, EventPlan, Event, Brigade } from '@/types';
 
 export const AdminDashboard: React.FC = () => {
   const [currentTime, setCurrentTime] = useState(new Date());
+  const [users, setUsers] = useState<User[]>([]);
+  const [submissions, setSubmissions] = useState<Submission[]>([]);
+  const [eventPlans, setEventPlans] = useState<EventPlan[]>([]);
+  const [events, setEvents] = useState<Event[]>([]);
+  const [brigades, setBrigades] = useState<Brigade[]>([]);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     const timer = setInterval(() => setCurrentTime(new Date()), 1000);
     return () => clearInterval(timer);
   }, []);
+
+  useEffect(() => {
+    fetchLiveData();
+  }, []);
+
+  const fetchLiveData = async () => {
+    setLoading(true);
+    try {
+      const [usersSnapshot, submissionsSnapshot, eventPlansSnapshot, eventsSnapshot, brigadesSnapshot] = await Promise.all([
+        getDocs(collection(db, 'users')),
+        getDocs(collection(db, 'submissions')),
+        getDocs(collection(db, 'eventPlans')),
+        getDocs(collection(db, 'events')),
+        getDocs(collection(db, 'brigades'))
+      ]);
+
+      const usersData = usersSnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data(),
+        createdAt: doc.data().createdAt.toDate()
+      })) as User[];
+
+      const submissionsData = submissionsSnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data(),
+        submittedAt: doc.data().submittedAt.toDate()
+      })) as Submission[];
+
+      const eventPlansData = eventPlansSnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data(),
+        date: doc.data().date.toDate(),
+        createdAt: doc.data().createdAt.toDate()
+      })) as EventPlan[];
+
+      const eventsData = eventsSnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data(),
+        startDate: doc.data().startDate.toDate(),
+        endDate: doc.data().endDate.toDate(),
+        createdAt: doc.data().createdAt.toDate()
+      })) as Event[];
+
+      const brigadesData = brigadesSnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data(),
+        createdAt: doc.data().createdAt.toDate()
+      })) as Brigade[];
+
+      setUsers(usersData);
+      setSubmissions(submissionsData);
+      setEventPlans(eventPlansData);
+      setEvents(eventsData);
+      setBrigades(brigadesData);
+    } catch (error) {
+      console.error('Error fetching live data:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Calculate live statistics
+  const totalEvents = events.filter(e => e.isActive).length;
+  const totalStudents = users.filter(u => u.role === 'STUDENT').length;
+  const activeStudents = users.filter(u => u.role === 'STUDENT' && u.isActive).length;
+  const totalSubmissions = submissions.length;
+  const submittedCount = submissions.filter(s => s.status === 'submitted').length;
+  const submissionRequiredPlans = eventPlans.filter(plan => plan.planType === 'withSubmission').length;
+  const completionRate = submissionRequiredPlans > 0 ? (submittedCount / (submissionRequiredPlans * totalStudents)) * 100 : 0;
+
+  const dashboardStats = [
+    { 
+      title: 'Total Events', 
+      value: totalEvents.toString(), 
+      change: totalEvents > 0 ? '+100%' : '0%', 
+      trend: totalEvents > 0 ? 'up' : 'neutral',
+      description: 'Active events', 
+      icon: Calendar, 
+      bgColor: 'bg-blue-50',
+      iconColor: 'text-blue-600',
+      borderColor: 'border-blue-200'
+    },
+    { 
+      title: 'Active Students', 
+      value: activeStudents.toString(), 
+      change: activeStudents > 0 ? `${Math.round((activeStudents/totalStudents)*100)}%` : '0%', 
+      trend: activeStudents > 0 ? 'up' : 'neutral',
+      description: `${totalStudents} total students`, 
+      icon: Users, 
+      bgColor: 'bg-emerald-50',
+      iconColor: 'text-emerald-600',
+      borderColor: 'border-emerald-200'
+    },
+    { 
+      title: 'Total Submissions', 
+      value: totalSubmissions.toString(), 
+      change: totalSubmissions > 0 ? '+100%' : '0%', 
+      trend: totalSubmissions > 0 ? 'up' : 'neutral',
+      description: `${submittedCount} completed`, 
+      icon: FileText, 
+      bgColor: 'bg-purple-50',
+      iconColor: 'text-purple-600',
+      borderColor: 'border-purple-200'
+    },
+    { 
+      title: 'Completion Rate', 
+      value: `${Math.round(completionRate)}%`, 
+      change: completionRate > 50 ? '+Good' : completionRate > 0 ? 'Average' : 'Low', 
+      trend: completionRate > 50 ? 'up' : completionRate > 0 ? 'neutral' : 'down',
+      description: 'Overall progress', 
+      icon: Target, 
+      bgColor: 'bg-orange-50',
+      iconColor: 'text-orange-600',
+      borderColor: 'border-orange-200'
+    },
+  ];
+
+  // Generate weekly chart data
+  const getWeeklyData = () => {
+    const weekData = [];
+    for (let i = 6; i >= 0; i--) {
+      const date = new Date();
+      date.setDate(date.getDate() - i);
+      const dateStr = date.toISOString().split('T')[0];
+      
+      const daySubmissions = submissions.filter(s => 
+        s.submittedAt.toISOString().split('T')[0] === dateStr
+      );
+      
+      const dayEvents = events.filter(e => 
+        e.createdAt.toISOString().split('T')[0] === dateStr
+      );
+      
+      weekData.push({
+        name: date.toLocaleDateString('en-US', { weekday: 'short' }),
+        submissions: daySubmissions.length,
+        events: dayEvents.length
+      });
+    }
+    return weekData;
+  };
+
+  // Brigade comparison data
+  const getBrigadeComparison = () => {
+    return brigades.map(brigade => {
+      const brigadeStudents = users.filter(u => u.brigadeId === brigade.id);
+      const brigadeSubmissions = submissions.filter(s => 
+        brigadeStudents.some(student => student.id === s.studentId)
+      );
+      const brigadeSubmittedCount = brigadeSubmissions.filter(s => s.status === 'submitted').length;
+      const participationRate = brigadeStudents.length > 0 ? 
+        (brigadeSubmittedCount / brigadeStudents.length) * 100 : 0;
+
+      return {
+        name: brigade.name.replace(' Brigade', ''),
+        students: brigadeStudents.length,
+        submissions: brigadeSubmittedCount,
+        participationRate: Math.round(participationRate)
+      };
+    });
+  };
+
+  const chartData = getWeeklyData();
+  const brigadeData = getBrigadeComparison();
 
   return (
     <div className="space-y-8">
@@ -99,7 +209,7 @@ export const AdminDashboard: React.FC = () => {
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Dashboard Overview</h1>
           <p className="text-gray-600 mt-2">
-            Welcome back! Here's what's happening with your brigade management system.
+            Real-time insights into your brigade management system performance.
           </p>
         </div>
         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
@@ -158,7 +268,7 @@ export const AdminDashboard: React.FC = () => {
 
       {/* Charts Row */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Activity Overview */}
+        {/* Weekly Activity */}
         <Card className="border-0 shadow-lg">
           <CardHeader>
             <div className="flex items-center justify-between">
@@ -212,100 +322,152 @@ export const AdminDashboard: React.FC = () => {
           </CardContent>
         </Card>
 
-        {/* System Status */}
+        {/* Brigade Performance Comparison */}
         <Card className="border-0 shadow-lg">
           <CardHeader>
             <CardTitle className="flex items-center space-x-2 text-gray-900">
-              <Activity className="h-5 w-5 text-emerald-600" />
-              <span>System Status</span>
+              <Users className="h-5 w-5 text-emerald-600" />
+              <span>Brigade Performance</span>
             </CardTitle>
             <CardDescription className="text-gray-600 mt-1">
-              Current system health and performance
+              Participation rates across different brigades
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="space-y-4">
-              <div className="flex items-center justify-between p-4 bg-emerald-50 rounded-xl border border-emerald-200">
-                <div className="flex items-center space-x-3">
-                  <CheckCircle className="h-5 w-5 text-emerald-600" />
-                  <div>
-                    <p className="font-semibold text-emerald-900">Database</p>
-                    <p className="text-sm text-emerald-700">Connected & Operational</p>
-                  </div>
-                </div>
-                <Badge className="bg-emerald-100 text-emerald-800 border-emerald-200">Online</Badge>
-              </div>
-              
-              <div className="flex items-center justify-between p-4 bg-blue-50 rounded-xl border border-blue-200">
-                <div className="flex items-center space-x-3">
-                  <CheckCircle className="h-5 w-5 text-blue-600" />
-                  <div>
-                    <p className="font-semibold text-blue-900">Authentication</p>
-                    <p className="text-sm text-blue-700">Firebase Auth Active</p>
-                  </div>
-                </div>
-                <Badge className="bg-blue-100 text-blue-800 border-blue-200">Active</Badge>
-              </div>
-              
-              <div className="flex items-center justify-between p-4 bg-purple-50 rounded-xl border border-purple-200">
-                <div className="flex items-center space-x-3">
-                  <CheckCircle className="h-5 w-5 text-purple-600" />
-                  <div>
-                    <p className="font-semibold text-purple-900">File Storage</p>
-                    <p className="text-sm text-purple-700">Cloud Storage Ready</p>
-                  </div>
-                </div>
-                <Badge className="bg-purple-100 text-purple-800 border-purple-200">Ready</Badge>
-              </div>
-            </div>
+            <ResponsiveContainer width="100%" height={300}>
+              <BarChart data={brigadeData}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                <XAxis dataKey="name" stroke="#6b7280" fontSize={12} />
+                <YAxis stroke="#6b7280" fontSize={12} />
+                <Tooltip 
+                  contentStyle={{ 
+                    backgroundColor: 'white', 
+                    border: '1px solid #e5e7eb', 
+                    borderRadius: '8px',
+                    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
+                  }}
+                  formatter={(value, name) => [
+                    name === 'participationRate' ? `${value}%` : value,
+                    name === 'participationRate' ? 'Participation Rate' : 
+                    name === 'students' ? 'Total Students' : 'Submissions'
+                  ]}
+                />
+                <Bar dataKey="participationRate" fill="#10b981" radius={[4, 4, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
           </CardContent>
         </Card>
       </div>
 
-      {/* Recent Activities */}
-      <Card className="border-0 shadow-lg">
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <div>
-              <CardTitle className="flex items-center space-x-2 text-gray-900">
-                <Clock className="h-5 w-5 text-orange-600" />
-                <span>Recent Activities</span>
-              </CardTitle>
-              <CardDescription className="text-gray-600 mt-1">
-                Latest system activities and updates
-              </CardDescription>
-            </div>
-            <Button variant="outline" size="sm" className="rounded-lg">
-              View All
-            </Button>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            {recentActivities.map((activity, index) => (
-              <div key={index} className="flex items-center space-x-4 p-4 bg-gray-50 rounded-xl border border-gray-100 hover:bg-gray-100 transition-colors">
-                <div className={`p-2 rounded-lg ${
-                  activity.type === 'system' ? 'bg-blue-100 text-blue-600' :
-                  activity.type === 'event' ? 'bg-purple-100 text-purple-600' :
-                  activity.type === 'users' ? 'bg-emerald-100 text-emerald-600' :
-                  'bg-orange-100 text-orange-600'
-                }`}>
-                  <activity.icon className="h-4 w-4" />
+      {/* Performance Comparisons */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* System Performance */}
+        <Card className="border-0 shadow-lg">
+          <CardHeader>
+            <CardTitle className="flex items-center space-x-2 text-gray-900">
+              <Activity className="h-5 w-5 text-blue-600" />
+              <span>System Performance</span>
+            </CardTitle>
+            <CardDescription className="text-gray-600 mt-1">
+              Key performance indicators and comparisons
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <div className="flex items-center justify-between p-4 bg-blue-50 rounded-xl border border-blue-200">
+                <div className="flex items-center space-x-3">
+                  <div className="p-2 bg-blue-100 rounded-lg">
+                    <Users className="h-5 w-5 text-blue-600" />
+                  </div>
+                  <div>
+                    <p className="font-semibold text-blue-900">Student Engagement</p>
+                    <p className="text-sm text-blue-700">{Math.round((activeStudents/totalStudents)*100)}% active participation</p>
+                  </div>
                 </div>
-                <div className="flex-1">
-                  <p className="text-sm font-semibold text-gray-900">{activity.action}</p>
-                  <p className="text-xs text-gray-600">
-                    by {activity.user} • {activity.time}
-                  </p>
+                <div className="text-right">
+                  <div className="text-lg font-bold text-blue-900">{activeStudents}/{totalStudents}</div>
+                  <div className="text-xs text-blue-600">Students</div>
                 </div>
-                <Badge variant="outline" className="text-xs">
-                  {activity.type}
-                </Badge>
               </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
+              
+              <div className="flex items-center justify-between p-4 bg-emerald-50 rounded-xl border border-emerald-200">
+                <div className="flex items-center space-x-3">
+                  <div className="p-2 bg-emerald-100 rounded-lg">
+                    <FileText className="h-5 w-5 text-emerald-600" />
+                  </div>
+                  <div>
+                    <p className="font-semibold text-emerald-900">Submission Rate</p>
+                    <p className="text-sm text-emerald-700">{Math.round((submittedCount/totalSubmissions)*100)}% completion rate</p>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <div className="text-lg font-bold text-emerald-900">{submittedCount}/{totalSubmissions}</div>
+                  <div className="text-xs text-emerald-600">Submissions</div>
+                </div>
+              </div>
+              
+              <div className="flex items-center justify-between p-4 bg-purple-50 rounded-xl border border-purple-200">
+                <div className="flex items-center space-x-3">
+                  <div className="p-2 bg-purple-100 rounded-lg">
+                    <Calendar className="h-5 w-5 text-purple-600" />
+                  </div>
+                  <div>
+                    <p className="font-semibold text-purple-900">Event Efficiency</p>
+                    <p className="text-sm text-purple-700">{eventPlans.length} activities planned</p>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <div className="text-lg font-bold text-purple-900">{totalEvents}</div>
+                  <div className="text-xs text-purple-600">Active Events</div>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Brigade Comparison Details */}
+        <Card className="border-0 shadow-lg">
+          <CardHeader>
+            <CardTitle className="flex items-center space-x-2 text-gray-900">
+              <Target className="h-5 w-5 text-orange-600" />
+              <span>Brigade Rankings</span>
+            </CardTitle>
+            <CardDescription className="text-gray-600 mt-1">
+              Performance ranking by brigade participation
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              {brigadeData
+                .sort((a, b) => b.participationRate - a.participationRate)
+                .map((brigade, index) => (
+                <div key={index} className="flex items-center justify-between p-4 bg-gray-50 rounded-xl border border-gray-100">
+                  <div className="flex items-center space-x-4">
+                    <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${
+                      index === 0 ? 'bg-yellow-100 text-yellow-800' :
+                      index === 1 ? 'bg-gray-100 text-gray-800' :
+                      index === 2 ? 'bg-orange-100 text-orange-800' :
+                      'bg-blue-100 text-blue-800'
+                    }`}>
+                      {index + 1}
+                    </div>
+                    <div>
+                      <h3 className="font-semibold text-gray-900">{brigade.name}</h3>
+                      <p className="text-sm text-gray-600">
+                        {brigade.students} students • {brigade.submissions} submissions
+                      </p>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <div className="text-lg font-bold text-gray-900">{brigade.participationRate}%</div>
+                    <div className="text-xs text-gray-600">Participation</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 };
