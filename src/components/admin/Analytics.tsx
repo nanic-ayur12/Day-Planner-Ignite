@@ -141,10 +141,14 @@ export const Analytics: React.FC = () => {
         s.submittedAt.toISOString().split('T')[0] === dateStr
       );
       
+      // Fix: Ensure participation is always a valid number, never NaN
+      const participationValue = totalStudents > 0 ? 
+        Math.round((daySubmissions.length / totalStudents) * 100) : 0;
+      
       data.push({
         date: date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
         submissions: daySubmissions.length,
-        participation: Math.round((daySubmissions.length / totalStudents) * 100)
+        participation: participationValue
       });
     }
     
