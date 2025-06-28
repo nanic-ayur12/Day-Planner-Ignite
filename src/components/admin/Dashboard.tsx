@@ -126,9 +126,9 @@ export const AdminDashboard: React.FC = () => {
       trend: activeStudents > 0 ? 'up' : 'neutral',
       description: `${totalStudents} total students`, 
       icon: Users, 
-      bgColor: 'bg-emerald-50',
-      iconColor: 'text-emerald-600',
-      borderColor: 'border-emerald-200'
+      bgColor: 'bg-green-50',
+      iconColor: 'text-green-600',
+      borderColor: 'border-green-200'
     },
     { 
       title: 'Total Submissions', 
@@ -203,7 +203,7 @@ export const AdminDashboard: React.FC = () => {
   const brigadeData = getBrigadeComparison();
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-8 w-full">
       {/* Header */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
         <div>
@@ -214,7 +214,7 @@ export const AdminDashboard: React.FC = () => {
         </div>
         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
           <div className="flex items-center space-x-2">
-            <div className="w-3 h-3 bg-emerald-500 rounded-full animate-pulse"></div>
+            <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
             <span className="text-sm text-gray-600 font-medium">
               {currentTime.toLocaleTimeString('en-US', { 
                 hour: '2-digit', 
@@ -224,7 +224,7 @@ export const AdminDashboard: React.FC = () => {
             </span>
           </div>
           <div className="flex space-x-2">
-            <Button size="sm" className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 rounded-lg">
+            <Button size="sm" className="bg-blue-600 hover:bg-blue-700">
               <Plus className="h-4 w-4 mr-2" />
               Quick Action
             </Button>
@@ -235,7 +235,7 @@ export const AdminDashboard: React.FC = () => {
       {/* Stats Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         {dashboardStats.map((stat, index) => (
-          <Card key={index} className={`border-0 shadow-lg hover:shadow-xl transition-all duration-300 ${stat.bgColor} ${stat.borderColor} border-l-4`}>
+          <Card key={index} className={`border shadow-sm hover:shadow-md transition-all duration-300 ${stat.bgColor} ${stat.borderColor} border-l-4`}>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
               <div className="space-y-1">
                 <CardTitle className="text-sm font-semibold text-gray-700">
@@ -244,7 +244,7 @@ export const AdminDashboard: React.FC = () => {
                 <div className="flex items-center space-x-2">
                   <span className="text-2xl font-bold text-gray-900">{stat.value}</span>
                   <div className={`flex items-center text-xs font-medium ${
-                    stat.trend === 'up' ? 'text-emerald-600' : 
+                    stat.trend === 'up' ? 'text-green-600' : 
                     stat.trend === 'down' ? 'text-red-600' : 'text-gray-500'
                   }`}>
                     {stat.trend === 'up' && <ArrowUpRight className="h-3 w-3" />}
@@ -269,7 +269,7 @@ export const AdminDashboard: React.FC = () => {
       {/* Charts Row */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Weekly Activity */}
-        <Card className="border-0 shadow-lg">
+        <Card className="border shadow-sm">
           <CardHeader>
             <div className="flex items-center justify-between">
               <div>
@@ -281,7 +281,7 @@ export const AdminDashboard: React.FC = () => {
                   Events and submissions over the past week
                 </CardDescription>
               </div>
-              <Button variant="outline" size="sm" className="rounded-lg">
+              <Button variant="outline" size="sm">
                 <Eye className="h-4 w-4 mr-2" />
                 View All
               </Button>
@@ -291,8 +291,19 @@ export const AdminDashboard: React.FC = () => {
             <ResponsiveContainer width="100%" height={300}>
               <AreaChart data={chartData}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                <XAxis dataKey="name" stroke="#6b7280" fontSize={12} />
-                <YAxis stroke="#6b7280" fontSize={12} />
+                <XAxis 
+                  dataKey="name" 
+                  stroke="#6b7280" 
+                  fontSize={12}
+                  axisLine={false}
+                  tickLine={false}
+                />
+                <YAxis 
+                  stroke="#6b7280" 
+                  fontSize={12}
+                  axisLine={false}
+                  tickLine={false}
+                />
                 <Tooltip 
                   contentStyle={{ 
                     backgroundColor: 'white', 
@@ -323,10 +334,10 @@ export const AdminDashboard: React.FC = () => {
         </Card>
 
         {/* Brigade Performance Comparison */}
-        <Card className="border-0 shadow-lg">
+        <Card className="border shadow-sm">
           <CardHeader>
             <CardTitle className="flex items-center space-x-2 text-gray-900">
-              <Users className="h-5 w-5 text-emerald-600" />
+              <Users className="h-5 w-5 text-green-600" />
               <span>Brigade Performance</span>
             </CardTitle>
             <CardDescription className="text-gray-600 mt-1">
@@ -337,8 +348,19 @@ export const AdminDashboard: React.FC = () => {
             <ResponsiveContainer width="100%" height={300}>
               <BarChart data={brigadeData}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                <XAxis dataKey="name" stroke="#6b7280" fontSize={12} />
-                <YAxis stroke="#6b7280" fontSize={12} />
+                <XAxis 
+                  dataKey="name" 
+                  stroke="#6b7280" 
+                  fontSize={12}
+                  axisLine={false}
+                  tickLine={false}
+                />
+                <YAxis 
+                  stroke="#6b7280" 
+                  fontSize={12}
+                  axisLine={false}
+                  tickLine={false}
+                />
                 <Tooltip 
                   contentStyle={{ 
                     backgroundColor: 'white', 
@@ -362,7 +384,7 @@ export const AdminDashboard: React.FC = () => {
       {/* Performance Comparisons */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* System Performance */}
-        <Card className="border-0 shadow-lg">
+        <Card className="border shadow-sm">
           <CardHeader>
             <CardTitle className="flex items-center space-x-2 text-gray-900">
               <Activity className="h-5 w-5 text-blue-600" />
@@ -390,19 +412,19 @@ export const AdminDashboard: React.FC = () => {
                 </div>
               </div>
               
-              <div className="flex items-center justify-between p-4 bg-emerald-50 rounded-xl border border-emerald-200">
+              <div className="flex items-center justify-between p-4 bg-green-50 rounded-xl border border-green-200">
                 <div className="flex items-center space-x-3">
-                  <div className="p-2 bg-emerald-100 rounded-lg">
-                    <FileText className="h-5 w-5 text-emerald-600" />
+                  <div className="p-2 bg-green-100 rounded-lg">
+                    <FileText className="h-5 w-5 text-green-600" />
                   </div>
                   <div>
-                    <p className="font-semibold text-emerald-900">Submission Rate</p>
-                    <p className="text-sm text-emerald-700">{Math.round((submittedCount/totalSubmissions)*100)}% completion rate</p>
+                    <p className="font-semibold text-green-900">Submission Rate</p>
+                    <p className="text-sm text-green-700">{Math.round((submittedCount/totalSubmissions)*100)}% completion rate</p>
                   </div>
                 </div>
                 <div className="text-right">
-                  <div className="text-lg font-bold text-emerald-900">{submittedCount}/{totalSubmissions}</div>
-                  <div className="text-xs text-emerald-600">Submissions</div>
+                  <div className="text-lg font-bold text-green-900">{submittedCount}/{totalSubmissions}</div>
+                  <div className="text-xs text-green-600">Submissions</div>
                 </div>
               </div>
               
@@ -426,7 +448,7 @@ export const AdminDashboard: React.FC = () => {
         </Card>
 
         {/* Brigade Comparison Details */}
-        <Card className="border-0 shadow-lg">
+        <Card className="border shadow-sm">
           <CardHeader>
             <CardTitle className="flex items-center space-x-2 text-gray-900">
               <Target className="h-5 w-5 text-orange-600" />

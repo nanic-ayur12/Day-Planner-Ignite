@@ -208,8 +208,8 @@ export const EventManagement: React.FC = () => {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="space-y-6 w-full max-w-7xl mx-auto">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <h1 className="text-3xl font-bold text-gray-900">Event Management</h1>
         <Dialog>
           <DialogTrigger asChild>
@@ -271,7 +271,7 @@ export const EventManagement: React.FC = () => {
       )}
 
       <Tabs defaultValue="events" className="w-full">
-        <TabsList>
+        <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value="events">Events</TabsTrigger>
           <TabsTrigger value="plans" disabled={!selectedEvent}>
             Event Plans {selectedEvent && `(${selectedEvent.name})`}
@@ -290,13 +290,13 @@ export const EventManagement: React.FC = () => {
               </Card>
             ) : (
               events.map((event) => (
-                <Card key={event.id} className="hover:shadow-lg transition-shadow">
+                <Card key={event.id} className="hover:shadow-md transition-shadow border">
                   <CardHeader>
-                    <div className="flex items-start justify-between">
-                      <div>
+                    <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
+                      <div className="space-y-2">
                         <CardTitle className="text-xl">{event.name}</CardTitle>
-                        <CardDescription className="mt-2">
-                          <div className="flex items-center space-x-4 text-sm">
+                        <CardDescription>
+                          <div className="flex flex-wrap items-center gap-4 text-sm">
                             <span className="flex items-center space-x-1">
                               <Calendar className="h-4 w-4" />
                               <span>{event.startDate.toLocaleDateString()} - {event.endDate.toLocaleDateString()}</span>
@@ -320,6 +320,7 @@ export const EventManagement: React.FC = () => {
                           variant="outline"
                           size="sm"
                           onClick={() => handleDeleteEvent(event.id)}
+                          className="border-red-200 text-red-600 hover:bg-red-50"
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>
@@ -335,16 +336,16 @@ export const EventManagement: React.FC = () => {
         <TabsContent value="plans" className="space-y-4">
           {selectedEvent && (
             <>
-              <div className="flex items-center justify-between">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <h2 className="text-xl font-semibold">Plans for {selectedEvent.name}</h2>
                 <Dialog>
                   <DialogTrigger asChild>
-                    <Button className="bg-emerald-600 hover:bg-emerald-700">
+                    <Button className="bg-green-600 hover:bg-green-700">
                       <Plus className="h-4 w-4 mr-2" />
                       Create Plan
                     </Button>
                   </DialogTrigger>
-                  <DialogContent className="max-w-2xl">
+                  <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
                     <DialogHeader>
                       <DialogTitle>Create Event Plan</DialogTitle>
                       <DialogDescription>
@@ -493,13 +494,13 @@ export const EventManagement: React.FC = () => {
                   </Card>
                 ) : (
                   eventPlans.map((plan) => (
-                    <Card key={plan.id} className="hover:shadow-lg transition-shadow">
+                    <Card key={plan.id} className="hover:shadow-md transition-shadow border">
                       <CardHeader>
-                        <div className="flex items-start justify-between">
+                        <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
                           <div className="space-y-2">
                             <CardTitle className="text-lg">{plan.title}</CardTitle>
                             <CardDescription>{plan.description}</CardDescription>
-                            <div className="flex items-center space-x-4 text-sm text-gray-600">
+                            <div className="flex flex-wrap items-center gap-4 text-sm text-gray-600">
                               <span className="flex items-center space-x-1">
                                 <Calendar className="h-4 w-4" />
                                 <span>{plan.date.toLocaleDateString()}</span>
@@ -523,6 +524,7 @@ export const EventManagement: React.FC = () => {
                             variant="outline"
                             size="sm"
                             onClick={() => handleDeleteEventPlan(plan.id)}
+                            className="border-red-200 text-red-600 hover:bg-red-50"
                           >
                             <Trash2 className="h-4 w-4" />
                           </Button>

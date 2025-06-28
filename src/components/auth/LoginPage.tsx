@@ -66,40 +66,33 @@ export const LoginPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex items-center justify-center p-4 relative overflow-hidden">
-      {/* Background Effects */}
-      <div className="absolute inset-0 opacity-20">
-        <div className="absolute inset-0" style={{
-          backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%239C92AC' fill-opacity='0.05'%3E%3Ccircle cx='30' cy='30' r='2'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`
-        }}></div>
-      </div>
-      
-      <div className="w-full max-w-md space-y-8 relative z-10">
+    <div className="min-h-screen bg-white flex items-center justify-center p-4">
+      <div className="w-full max-w-md space-y-8">
         {/* Header */}
         <div className="text-center space-y-6">
           <div className="flex items-center justify-center space-x-3">
             <div className="relative">
-              <div className="p-4 bg-gradient-to-r from-purple-600 to-blue-600 rounded-2xl shadow-2xl">
-                <Activity className="h-10 w-10 text-white" />
+              <div className="p-4 bg-blue-100 rounded-2xl shadow-lg">
+                <Activity className="h-10 w-10 text-blue-600" />
               </div>
               <div className="absolute -top-1 -right-1">
-                <Sparkles className="h-5 w-5 text-yellow-400 animate-pulse" />
+                <Sparkles className="h-5 w-5 text-orange-500 animate-pulse" />
               </div>
             </div>
             <div className="text-left">
-              <h1 className="text-3xl font-bold bg-gradient-to-r from-white to-purple-200 bg-clip-text text-transparent">
+              <h1 className="text-3xl font-bold text-gray-900">
                 Ignite Planner
               </h1>
-              <p className="text-purple-200 text-sm font-medium">Kumaraguru College</p>
+              <p className="text-blue-600 text-sm font-medium">Kumaraguru College</p>
             </div>
           </div>
           <div className="space-y-2">
-            <p className="text-xl text-white font-semibold">Welcome Back</p>
-            <p className="text-purple-200">Lead & Co-Lead Management System</p>
+            <p className="text-xl text-gray-900 font-semibold">Welcome Back</p>
+            <p className="text-gray-600">Lead & Co-Lead Management System</p>
           </div>
         </div>
 
-        <Card className="border-0 shadow-2xl bg-white/95 backdrop-blur-sm">
+        <Card className="border shadow-lg bg-white">
           <CardHeader className="space-y-1 text-center pb-6">
             <CardTitle className="text-2xl font-bold text-gray-900">Sign In</CardTitle>
             <CardDescription className="text-gray-600">
@@ -135,7 +128,7 @@ export const LoginPage: React.FC = () => {
                       placeholder="Enter your roll number"
                       value={studentCredentials.rollNumber}
                       onChange={(e) => setStudentCredentials(prev => ({ ...prev, rollNumber: e.target.value }))}
-                      className="h-12 border-gray-300 focus:border-purple-500 focus:ring-purple-500 rounded-xl"
+                      className="h-12 border-gray-300 focus:border-blue-500 focus:ring-blue-500 rounded-xl"
                     />
                   </div>
                   <div className="space-y-2">
@@ -146,7 +139,7 @@ export const LoginPage: React.FC = () => {
                       placeholder="Enter your password"
                       value={studentCredentials.password}
                       onChange={(e) => setStudentCredentials(prev => ({ ...prev, password: e.target.value }))}
-                      className="h-12 border-gray-300 focus:border-purple-500 focus:ring-purple-500 rounded-xl"
+                      className="h-12 border-gray-300 focus:border-blue-500 focus:ring-blue-500 rounded-xl"
                     />
                   </div>
                   <Button 
@@ -154,13 +147,13 @@ export const LoginPage: React.FC = () => {
                     variant="outline"
                     size="sm"
                     onClick={() => fillDemoCredentials('student')}
-                    className="w-full border-purple-200 text-purple-600 hover:bg-purple-50 rounded-xl"
+                    className="w-full border-blue-200 text-blue-600 hover:bg-blue-50 rounded-xl"
                   >
                     Use Demo Credentials
                   </Button>
                   <Button 
                     type="submit" 
-                    className="w-full h-12 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white rounded-xl font-medium transition-all duration-200 shadow-lg hover:shadow-xl"
+                    className="w-full h-12 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-medium transition-all duration-200 shadow-lg hover:shadow-xl"
                     disabled={loading}
                   >
                     {loading ? (
@@ -183,7 +176,7 @@ export const LoginPage: React.FC = () => {
                       placeholder="Enter your email"
                       value={adminCredentials.email}
                       onChange={(e) => setAdminCredentials(prev => ({ ...prev, email: e.target.value }))}
-                      className="h-12 border-gray-300 focus:border-emerald-500 focus:ring-emerald-500 rounded-xl"
+                      className="h-12 border-gray-300 focus:border-green-500 focus:ring-green-500 rounded-xl"
                     />
                   </div>
                   <div className="space-y-2">
@@ -194,7 +187,7 @@ export const LoginPage: React.FC = () => {
                       placeholder="Enter your password"
                       value={adminCredentials.password}
                       onChange={(e) => setAdminCredentials(prev => ({ ...prev, password: e.target.value }))}
-                      className="h-12 border-gray-300 focus:border-emerald-500 focus:ring-emerald-500 rounded-xl"
+                      className="h-12 border-gray-300 focus:border-green-500 focus:ring-green-500 rounded-xl"
                     />
                   </div>
                   <Button 
@@ -202,13 +195,13 @@ export const LoginPage: React.FC = () => {
                     variant="outline"
                     size="sm"
                     onClick={() => fillDemoCredentials('admin')}
-                    className="w-full border-emerald-200 text-emerald-600 hover:bg-emerald-50 rounded-xl"
+                    className="w-full border-green-200 text-green-600 hover:bg-green-50 rounded-xl"
                   >
                     Use Demo Credentials
                   </Button>
                   <Button 
                     type="submit" 
-                    className="w-full h-12 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white rounded-xl font-medium transition-all duration-200 shadow-lg hover:shadow-xl"
+                    className="w-full h-12 bg-green-600 hover:bg-green-700 text-white rounded-xl font-medium transition-all duration-200 shadow-lg hover:shadow-xl"
                     disabled={loading}
                   >
                     {loading ? (
@@ -230,7 +223,7 @@ export const LoginPage: React.FC = () => {
           </CardContent>
         </Card>
 
-        <div className="text-center text-sm text-purple-200">
+        <div className="text-center text-sm text-gray-500">
           Secured with Firebase Authentication
         </div>
       </div>
