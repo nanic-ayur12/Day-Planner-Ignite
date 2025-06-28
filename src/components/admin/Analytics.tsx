@@ -109,7 +109,7 @@ export const Analytics: React.FC = () => {
   const submittedCount = submissions.filter(s => s.status === 'submitted').length;
   const participationRate = totalStudents > 0 ? (submittedCount / totalStudents) * 100 : 0;
 
-  // Brigade performance data
+  // Brigade performance data with NaN protection
   const brigadePerformance = brigades.map(brigade => {
     const brigadeStudents = students.filter(s => s.brigadeId === brigade.id);
     const brigadeSubmissions = submissions.filter(s => 
@@ -119,15 +119,18 @@ export const Analytics: React.FC = () => {
     const brigadeParticipationRate = brigadeStudents.length > 0 ? 
       (brigadeSubmittedCount / brigadeStudents.length) * 100 : 0;
 
+    // Ensure all values are valid numbers
+    const safeParticipationRate = isNaN(brigadeParticipationRate) ? 0 : Math.round(brigadeParticipationRate);
+
     return {
       name: brigade.name,
       students: brigadeStudents.length,
       submissions: brigadeSubmittedCount,
-      participationRate: Math.round(brigadeParticipationRate)
+      participationRate: safeParticipationRate
     };
   });
 
-  // Daily participation data
+  // Daily participation data with NaN protection
   const getDailyParticipation = () => {
     const days = parseInt(selectedTimeRange);
     const data = [];
@@ -141,14 +144,16 @@ export const Analytics: React.FC = () => {
         s.submittedAt.toISOString().split('T')[0] === dateStr
       );
       
-      // Fix: Ensure participation is always a valid number, never NaN
+      // Ensure participation is always a valid number, never NaN
       const participationValue = totalStudents > 0 ? 
-        Math.round((daySubmissions.length / totalStudents) * 100) : 0;
+        (daySubmissions.length / totalStudents) * 100 : 0;
+      
+      const safeParticipationValue = isNaN(participationValue) ? 0 : Math.round(participationValue);
       
       data.push({
         date: date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
         submissions: daySubmissions.length,
-        participation: participationValue
+        participation: safeParticipationValue
       });
     }
     
@@ -162,14 +167,15 @@ export const Analytics: React.FC = () => {
     { name: 'Late', value: submissions.filter(s => s.status === 'late').length, color: '#EF4444' }
   ];
 
-  // Activity completion data
+  // Activity completion data with NaN protection
   const activityCompletion = eventPlans.map(plan => {
     const planSubmissions = submissions.filter(s => s.eventPlanId === plan.id);
     const completionRate = totalStudents > 0 ? (planSubmissions.length / totalStudents) * 100 : 0;
+    const safeCompletionRate = isNaN(completionRate) ? 0 : Math.round(completionRate);
     
     return {
       name: plan.title.length > 20 ? plan.title.substring(0, 20) + '...' : plan.title,
-      completion: Math.round(completionRate),
+      completion: safeCompletionRate,
       submissions: planSubmissions.length,
       total: totalStudents
     };
@@ -276,7 +282,7 @@ export const Analytics: React.FC = () => {
               <AreaChart data={dailyParticipationData}>
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="date" />
-                <YAxis />
+                <YAxis domain={[0, 'auto']} />
                 <Tooltip 
                   formatter={(value, name) => [
                     name === 'submissions' ? `${value} submissions` : `${value}%`,
@@ -312,7 +318,7 @@ export const Analytics: React.FC = () => {
               <BarChart data={brigadePerformance}>
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="name" angle={-45} textAnchor="end" height={80} />
-                <YAxis />
+                <YAxis domain={[0, 100]} />
                 <Tooltip 
                   formatter={(value, name) => [
                     name === 'participationRate' ? `${value}%` : value,
