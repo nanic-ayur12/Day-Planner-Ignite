@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { 
   Users, 
   Calendar, 
@@ -9,9 +8,7 @@ import {
   BarChart3,
   Target,
   ArrowUpRight,
-  ArrowDownRight,
-  Plus,
-  Eye
+  ArrowDownRight
 } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area } from 'recharts';
 import { collection, getDocs } from 'firebase/firestore';
@@ -213,12 +210,6 @@ export const AdminDashboard: React.FC = () => {
               })} IST
             </span>
           </div>
-          <div className="flex space-x-2">
-            <Button size="sm" className="bg-blue-600 hover:bg-blue-700">
-              <Plus className="h-4 w-4 mr-2" />
-              Quick Action
-            </Button>
-          </div>
         </div>
       </div>
 
@@ -271,10 +262,6 @@ export const AdminDashboard: React.FC = () => {
                   Events and submissions over the past week
                 </CardDescription>
               </div>
-              <Button variant="outline" size="sm">
-                <Eye className="h-4 w-4 mr-2" />
-                View All
-              </Button>
             </div>
           </CardHeader>
           <CardContent>
@@ -479,6 +466,21 @@ export const AdminDashboard: React.FC = () => {
             </div>
           </CardContent>
         </Card>
+      </div>
+
+      {/* Sidebar Footer */}
+      <div className="p-4">
+        <div className="bg-gray-50 p-3 rounded-lg border border-gray-200">
+          <div className="flex items-center space-x-3">
+            <div className="p-2 bg-blue-100 rounded-lg">
+              <Activity className="h-4 w-4 text-blue-600" />
+            </div>
+            <div>
+              <p className="text-sm font-semibold text-black">Ignite Student Portal</p>
+              <p className="text-xs text-gray-600">Kumaraguru Institutions</p>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );

@@ -8,6 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Loader2, Activity, GraduationCap, Shield, ArrowRight } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
+import { useToast } from '@/hooks/use-toast';
 
 export default function LoginPage() {
   const [studentCredentials, setStudentCredentials] = useState({ rollNumber: '', password: '' });
@@ -16,6 +17,7 @@ export default function LoginPage() {
   const [error, setError] = useState('');
   const { login } = useAuth();
   const navigate = useNavigate();
+  const { toast } = useToast();
 
   const handleStudentLogin = async (e: { preventDefault: () => void; }) => {
     e.preventDefault();
@@ -29,6 +31,10 @@ export default function LoginPage() {
 
     try {
       await login(studentCredentials.rollNumber, studentCredentials.password, true);
+      toast({
+        title: "Login Successful!",
+        description: "Welcome to your student dashboard",
+      });
       navigate('/student');
     } catch (error) {
       setError('Invalid roll number or password');
@@ -49,6 +55,10 @@ export default function LoginPage() {
 
     try {
       await login(adminCredentials.email, adminCredentials.password, false);
+      toast({
+        title: "Login Successful!",
+        description: "Welcome to your admin dashboard",
+      });
       navigate('/admin');
     } catch (error) {
       setError('Invalid email or password');
@@ -148,7 +158,7 @@ export default function LoginPage() {
                           placeholder="Enter your roll number"
                           value={studentCredentials.rollNumber}
                           onChange={(e) => setStudentCredentials(prev => ({ ...prev, rollNumber: e.target.value }))}
-                          className="h-12 border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 rounded-lg text-sm"
+                          className="h-12 border-gray-200 focus:border-blue-500 focus:ring-0 focus-visible:ring-0 rounded-lg text-sm"
                         />
                       </div>
                       <div className="space-y-2">
@@ -161,7 +171,7 @@ export default function LoginPage() {
                           placeholder="Enter your password"
                           value={studentCredentials.password}
                           onChange={(e) => setStudentCredentials(prev => ({ ...prev, password: e.target.value }))}
-                          className="h-12 border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 rounded-lg text-sm"
+                          className="h-12 border-gray-200 focus:border-blue-500 focus:ring-0 focus-visible:ring-0 rounded-lg text-sm"
                         />
                       </div>
                     </div>
@@ -169,7 +179,7 @@ export default function LoginPage() {
                     <div className="space-y-3">
                       <Button 
                         type="submit"
-                        className="w-full h-12 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-all duration-200 shadow-lg hover:shadow-xl group"
+                        className="w-full h-12 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-all duration-200 shadow-lg hover:shadow-xl group focus:outline-none focus:ring-0 focus-visible:ring-0"
                         disabled={loading}
                       >
                         {loading ? (
@@ -202,7 +212,7 @@ export default function LoginPage() {
                           placeholder="Enter your email"
                           value={adminCredentials.email}
                           onChange={(e) => setAdminCredentials(prev => ({ ...prev, email: e.target.value }))}
-                          className="h-12 border-gray-200 focus:border-green-500 focus:ring-2 focus:ring-green-500/20 rounded-lg text-sm"
+                          className="h-12 border-gray-200 focus:border-green-500 focus:ring-0 focus-visible:ring-0 rounded-lg text-sm"
                         />
                       </div>
                       <div className="space-y-2">
@@ -215,7 +225,7 @@ export default function LoginPage() {
                           placeholder="Enter your password"
                           value={adminCredentials.password}
                           onChange={(e) => setAdminCredentials(prev => ({ ...prev, password: e.target.value }))}
-                          className="h-12 border-gray-200 focus:border-green-500 focus:ring-2 focus:ring-green-500/20 rounded-lg text-sm"
+                          className="h-12 border-gray-200 focus:border-green-500 focus:ring-0 focus-visible:ring-0 rounded-lg text-sm"
                         />
                       </div>
                     </div>
@@ -223,7 +233,7 @@ export default function LoginPage() {
                     <div className="space-y-3">
                       <Button 
                         type="submit"
-                        className="w-full h-12 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium transition-all duration-200 shadow-lg hover:shadow-xl group"
+                        className="w-full h-12 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium transition-all duration-200 shadow-lg hover:shadow-xl group focus:outline-none focus:ring-0 focus-visible:ring-0"
                         disabled={loading}
                       >
                         {loading ? (
