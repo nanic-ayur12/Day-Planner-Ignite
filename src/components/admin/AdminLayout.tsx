@@ -72,7 +72,7 @@ export const AdminLayout: React.FC = () => {
               <Activity className="h-5 w-5 text-blue-600" />
             </div>
             <div>
-              <h1 className="font-bold text-lg text-black">Ignite Planner</h1>
+              <h1 className="font-bold text-lg text-black">Ignite Portal</h1>
               <p className="text-xs text-gray-500">Admin Dashboard</p>
             </div>
           </div>
