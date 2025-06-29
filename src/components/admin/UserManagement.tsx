@@ -25,7 +25,7 @@ import {
   Filter,
   Save
 } from 'lucide-react';
-import { collection, addDoc, getDocs, updateDoc, deleteDoc, doc } from 'firebase/firestore';
+import { collection, setDoc, getDocs, updateDoc, deleteDoc, doc } from 'firebase/firestore';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { db, auth } from '@/lib/firebase';
 import { User, Brigade } from '@/types';
@@ -145,7 +145,8 @@ export const UserManagement: React.FC = () => {
         })
       };
 
-      await addDoc(collection(db, 'users'), { ...userData, id: userCredential.user.uid });
+      // Use setDoc with the Auth UID as the document ID
+      await setDoc(doc(db, 'users', userCredential.user.uid), userData);
       
       setUserForm({
         name: '',
@@ -262,7 +263,6 @@ export const UserManagement: React.FC = () => {
           const selectedBrigade = brigades.find(b => b.name === userData.brigadeName);
           
           const userDoc = {
-            id: userCredential.user.uid,
             name: userData.name,
             email: email,
             role: userData.role || 'STUDENT',
@@ -275,7 +275,8 @@ export const UserManagement: React.FC = () => {
             } : {})
           };
           
-          await addDoc(collection(db, 'users'), userDoc);
+          // Use setDoc with the Auth UID as the document ID
+          await setDoc(doc(db, 'users', userCredential.user.uid), userDoc);
           successCount++;
         } catch (error) {
           console.error(`Error creating user ${userData.name}:`, error);
