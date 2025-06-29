@@ -15,7 +15,6 @@ import {
   Calendar,
   Users,
   BarChart3,
-  FileText,
   Settings,
   LogOut,
   Menu,
