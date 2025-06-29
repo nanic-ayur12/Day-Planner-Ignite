@@ -57,7 +57,6 @@ export default function LoginPage() {
     }
   };
 
-
   return (
     <div className="min-h-screen bg-gray-50 flex">
       {/* Left side - Branding */}
@@ -71,7 +70,7 @@ export default function LoginPage() {
           </div>
           <div className="space-y-4">
             <h1 className="text-5xl font-bold text-black leading-tight">
-             Student Ignite Portal
+              Student Ignite Portal
             </h1>
             <div className="space-y-2">
               <p className="text-xl text-blue-600 font-semibold">Kumaraguru Institutions</p>
@@ -106,7 +105,7 @@ export default function LoginPage() {
           </div>
 
           <div className="text-center space-y-2">
-            <h2 className="text-3xl font-bold text-black">Welcome !! </h2>
+            <h2 className="text-3xl font-bold text-black">Welcome !!</h2>
             <p className="text-gray-600">Please sign in to your account</p>
           </div>
 
@@ -122,14 +121,14 @@ export default function LoginPage() {
                 <TabsList className="grid w-full grid-cols-2 bg-gray-50 p-1 rounded-lg h-12">
                   <TabsTrigger 
                     value="student" 
-                    className="flex items-center justify-center space-x-2 data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:border data-[state=active]:border-gray-200 rounded-md transition-all h-10"
+                    className="flex items-center justify-center space-x-2 data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:border data-[state=active]:border-gray-200 rounded-md transition-all h-10 focus:outline-none focus:ring-0 focus-visible:ring-0"
                   >
                     <GraduationCap className="h-4 w-4" />
                     <span className="font-medium text-black">Student</span>
                   </TabsTrigger>
                   <TabsTrigger 
                     value="admin" 
-                    className="flex items-center justify-center space-x-2 data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:border data-[state=active]:border-gray-200 rounded-md transition-all h-10"
+                    className="flex items-center justify-center space-x-2 data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:border data-[state=active]:border-gray-200 rounded-md transition-all h-10 focus:outline-none focus:ring-0 focus-visible:ring-0"
                   >
                     <Shield className="h-4 w-4" />
                     <span className="font-medium text-black">Admin</span>
@@ -137,7 +136,7 @@ export default function LoginPage() {
                 </TabsList>
 
                 <TabsContent value="student" className="mt-6">
-                  <div className="space-y-6">
+                  <form onSubmit={handleStudentLogin} className="space-y-6">
                     <div className="space-y-4">
                       <div className="space-y-2">
                         <Label htmlFor="rollNumber" className="text-sm font-medium text-black">
@@ -169,7 +168,7 @@ export default function LoginPage() {
 
                     <div className="space-y-3">
                       <Button 
-                        onClick={handleStudentLogin}
+                        type="submit"
                         className="w-full h-12 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-all duration-200 shadow-lg hover:shadow-xl group"
                         disabled={loading}
                       >
@@ -187,11 +186,11 @@ export default function LoginPage() {
                         )}
                       </Button>
                     </div>
-                  </div>
+                  </form>
                 </TabsContent>
 
                 <TabsContent value="admin" className="mt-6">
-                  <div className="space-y-6">
+                  <form onSubmit={handleAdminLogin} className="space-y-6">
                     <div className="space-y-4">
                       <div className="space-y-2">
                         <Label htmlFor="email" className="text-sm font-medium text-black">
@@ -223,7 +222,7 @@ export default function LoginPage() {
 
                     <div className="space-y-3">
                       <Button 
-                        onClick={handleAdminLogin}
+                        type="submit"
                         className="w-full h-12 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium transition-all duration-200 shadow-lg hover:shadow-xl group"
                         disabled={loading}
                       >
@@ -241,7 +240,7 @@ export default function LoginPage() {
                         )}
                       </Button>
                     </div>
-                  </div>
+                  </form>
                 </TabsContent>
               </Tabs>
 
