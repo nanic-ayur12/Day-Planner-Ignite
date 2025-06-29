@@ -213,7 +213,7 @@ export const MySubmissions: React.FC = () => {
       {/* Missed Submissions Alert */}
       {missedSubmissions.length > 0 && (
         <Alert className="border-orange-200 bg-orange-50">
-          <div className="flex items-center justify-center space-x-2">
+          <div className="flex items-center justify-left space-x-2">
             <AlertCircle className="h-4 w-4" />
             <AlertDescription className="text-orange-800 text-center">
               You have {missedSubmissions.length} missed submission(s). Check with your instructor for late submission options.
