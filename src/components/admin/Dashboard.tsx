@@ -194,9 +194,9 @@ export const AdminDashboard: React.FC = () => {
       {/* Header */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
         <div>
-          <h1 className="text-3xl font-bold text-black">Dashboard Overview</h1>
+          <h1 className="text-3xl font-bold text-black">Overview</h1>
           <p className="text-gray-600 mt-2">
-            Real-time insights into your brigade management system performance.
+            Real-time insights into student performance.
           </p>
         </div>
         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
