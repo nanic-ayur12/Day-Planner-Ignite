@@ -143,6 +143,21 @@ export const DayActivities: React.FC = () => {
   const handleFileUpload = async (activityId: string, file: File) => {
     if (!file || !userProfile?.id) return;
 
+    // Get the file size limit from the activity or default to 5MB
+    const activity = eventPlans.find(plan => plan.id === activityId);
+    const maxSizeInMB = activity?.fileSizeLimit || 5;
+    const maxSizeInBytes = maxSizeInMB * 1024 * 1024;
+
+    // Check file size
+    if (file.size > maxSizeInBytes) {
+      toast({
+        title: "File too large",
+        description: `File size exceeds ${maxSizeInMB}MB limit`,
+        variant: "destructive",
+      });
+      return;
+    }
+
     setLoading(true);
     setUploadProgress(prev => ({ ...prev, [activityId]: 0 }));
     
@@ -379,11 +394,13 @@ export const DayActivities: React.FC = () => {
     }
 
     if (activity.submissionType === 'file') {
+      const maxSizeInMB = activity.fileSizeLimit || 5;
+      
       return (
         <div className="mt-4 space-y-4">
           <div>
             <Label htmlFor={`file-${activity.id}`} className="text-sm font-medium text-black">
-              Upload File (Max: {activity.fileSizeLimit}MB)
+              Upload File (Max: {maxSizeInMB}MB)
             </Label>
             <Input
               id={`file-${activity.id}`}
@@ -392,10 +409,11 @@ export const DayActivities: React.FC = () => {
               onChange={(e) => {
                 const file = e.target.files?.[0];
                 if (file) {
-                  if (file.size > (activity.fileSizeLimit || 5) * 1024 * 1024) {
+                  const maxSizeInBytes = maxSizeInMB * 1024 * 1024;
+                  if (file.size > maxSizeInBytes) {
                     toast({
                       title: "File too large",
-                      description: `File size exceeds ${activity.fileSizeLimit}MB limit`,
+                      description: `File size exceeds ${maxSizeInMB}MB limit`,
                       variant: "destructive",
                     });
                     return;
