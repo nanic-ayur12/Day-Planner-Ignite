@@ -118,8 +118,8 @@ export const AdminLayout: React.FC = () => {
                 <Activity className="h-4 w-4 text-blue-600" />
               </div>
               <div>
-                <p className="text-sm font-semibold text-black">Ignite Day Planner</p>
-                <p className="text-xs text-gray-600">Kumaraguru College</p>
+                <p className="text-sm font-semibold text-black">Ignite Student Portal</p>
+                <p className="text-xs text-gray-600">Kumaraguru Institutions</p>
               </div>
             </div>
           </div>
@@ -181,7 +181,7 @@ export const AdminLayout: React.FC = () => {
                     <p className="text-xs text-gray-600">{userProfile?.email}</p>
                     <div className="flex items-center space-x-2 mt-2">
                       <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                        Administrator
+                        Admin
                       </span>
                     </div>
                   </div>
