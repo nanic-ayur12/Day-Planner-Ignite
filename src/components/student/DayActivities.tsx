@@ -530,7 +530,7 @@ export const DayActivities: React.FC = () => {
         </div>
         
         <Alert className="border border-blue-200 bg-blue-50">
-          <div className="flex items-center justify-center space-x-2">
+          <div className="flex items-center justify-left space-x-2">
             <Clock className="h-4 w-4" />
             <AlertDescription className="text-blue-800 text-center">
               {renderPhaseMessage()} • Current time: {currentTime.toLocaleTimeString()}
