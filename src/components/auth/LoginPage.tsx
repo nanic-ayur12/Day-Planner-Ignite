@@ -1,23 +1,19 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useAuth } from '@/contexts/AuthContext';
+import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Loader2, Activity, GraduationCap, Shield, Sparkles } from 'lucide-react';
+import { Loader2, Activity, GraduationCap, Shield, ArrowRight } from 'lucide-react';
 
-export const LoginPage: React.FC = () => {
+export default function LoginPage() {
   const [studentCredentials, setStudentCredentials] = useState({ rollNumber: '', password: '' });
   const [adminCredentials, setAdminCredentials] = useState({ email: '', password: '' });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const { login } = useAuth();
-  const navigate = useNavigate();
 
-  const handleStudentLogin = async (e: React.FormEvent) => {
+  const handleStudentLogin = async (e: { preventDefault: () => void; }) => {
     e.preventDefault();
     if (!studentCredentials.rollNumber || !studentCredentials.password) {
       setError('Please fill in all fields');
@@ -28,8 +24,11 @@ export const LoginPage: React.FC = () => {
     setError('');
 
     try {
-      await login(studentCredentials.rollNumber, studentCredentials.password, true);
-      navigate('/student');
+      // Simulate API call - replace with actual login logic
+      console.log('Student login:', studentCredentials);
+      // await login(studentCredentials.rollNumber, studentCredentials.password, true);
+      // navigate('/student');
+      alert('Student login successful! (Demo)');
     } catch (error) {
       setError('Invalid roll number or password');
     } finally {
@@ -37,7 +36,7 @@ export const LoginPage: React.FC = () => {
     }
   };
 
-  const handleAdminLogin = async (e: React.FormEvent) => {
+  const handleAdminLogin = async (e: { preventDefault: () => void; }) => {
     e.preventDefault();
     if (!adminCredentials.email || !adminCredentials.password) {
       setError('Please fill in all fields');
@@ -48,8 +47,11 @@ export const LoginPage: React.FC = () => {
     setError('');
 
     try {
-      await login(adminCredentials.email, adminCredentials.password, false);
-      navigate('/admin');
+      // Simulate API call - replace with actual login logic
+      console.log('Admin login:', adminCredentials);
+      // await login(adminCredentials.email, adminCredentials.password, false);
+      // navigate('/admin');
+      alert('Admin login successful! (Demo)');
     } catch (error) {
       setError('Invalid email or password');
     } finally {
@@ -57,7 +59,7 @@ export const LoginPage: React.FC = () => {
     }
   };
 
-  const fillDemoCredentials = (type: 'admin' | 'student') => {
+  const fillDemoCredentials = (type: string) => {
     if (type === 'admin') {
       setAdminCredentials({ email: 'admin@ignite.edu', password: 'admin123' });
     } else {
@@ -66,165 +68,221 @@ export const LoginPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-white flex items-center justify-center p-4">
-      <div className="w-full max-w-md space-y-8">
-        {/* Header */}
-        <div className="text-center space-y-6">
-          <div className="flex items-center justify-center space-x-3">
-            <div className="relative">
-              <div className="p-4 bg-blue-100 rounded-2xl shadow-lg">
-                <Activity className="h-10 w-10 text-blue-600" />
-              </div>
-              <div className="absolute -top-1 -right-1">
-                <Sparkles className="h-5 w-5 text-orange-500 animate-pulse" />
-              </div>
-            </div>
-            <div className="text-left">
-              <h1 className="text-3xl font-bold text-gray-900">
-                Ignite Planner
-              </h1>
-              <p className="text-blue-600 text-sm font-medium">Kumaraguru College</p>
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100 flex">
+      {/* Left side - Branding */}
+      <div className="hidden lg:flex lg:w-1/2 bg-white items-center justify-center p-12 relative overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-br from-blue-50 to-indigo-50 opacity-30"></div>
+        <div className="relative z-10 max-w-lg text-center space-y-8">
+          <div className="flex items-center justify-center">
+            <div className="p-6 bg-white rounded-3xl shadow-xl border border-gray-100">
+              <Activity className="h-16 w-16 text-blue-600" />
             </div>
           </div>
-          <div className="space-y-2">
-            <p className="text-xl text-gray-900 font-semibold">Welcome Back</p>
-            <p className="text-gray-600">Lead & Co-Lead Management System</p>
+          <div className="space-y-4">
+            <h1 className="text-5xl font-bold text-gray-900 leading-tight">
+              Ignite Planner
+            </h1>
+            <div className="space-y-2">
+              <p className="text-xl text-blue-600 font-semibold">Kumaraguru College</p>
+              <p className="text-lg text-gray-600 leading-relaxed">
+                Streamlined Lead & Co-Lead Management System
+              </p>
+            </div>
+          </div>
+          <div className="pt-8">
+            <div className="inline-flex items-center space-x-2 bg-white px-4 py-2 rounded-full shadow-sm border border-gray-200">
+              <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+              <span className="text-sm text-gray-600 font-medium">Secured with Firebase</span>
+            </div>
           </div>
         </div>
+      </div>
 
-        <Card className="border shadow-lg bg-white">
-          <CardHeader className="space-y-1 text-center pb-6">
-            <CardTitle className="text-2xl font-bold text-gray-900">Sign In</CardTitle>
-            <CardDescription className="text-gray-600">
-              Choose your account type to continue
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Tabs defaultValue="student" className="w-full">
-              <TabsList className="grid w-full grid-cols-2 bg-gray-100 p-1 rounded-xl">
-                <TabsTrigger 
-                  value="student" 
-                  className="flex items-center space-x-2 data-[state=active]:bg-white data-[state=active]:shadow-sm rounded-lg transition-all"
-                >
-                  <GraduationCap className="h-4 w-4" />
-                  <span>Student</span>
-                </TabsTrigger>
-                <TabsTrigger 
-                  value="admin" 
-                  className="flex items-center space-x-2 data-[state=active]:bg-white data-[state=active]:shadow-sm rounded-lg transition-all"
-                >
-                  <Shield className="h-4 w-4" />
-                  <span>Admin</span>
-                </TabsTrigger>
-              </TabsList>
+      {/* Right side - Login Form */}
+      <div className="w-full lg:w-1/2 flex items-center justify-center p-6 lg:p-12">
+        <div className="w-full max-w-md space-y-8">
+          {/* Mobile Header */}
+          <div className="lg:hidden text-center space-y-4">
+            <div className="flex items-center justify-center">
+              <div className="p-4 bg-white rounded-2xl shadow-lg border border-gray-100">
+                <Activity className="h-10 w-10 text-blue-600" />
+              </div>
+            </div>
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900">Ignite Planner</h1>
+              <p className="text-blue-600 font-medium">Kumaraguru College</p>
+            </div>
+          </div>
 
-              <TabsContent value="student" className="mt-6">
-                <form onSubmit={handleStudentLogin} className="space-y-5">
-                  <div className="space-y-2">
-                    <Label htmlFor="rollNumber" className="text-gray-700 font-medium">Roll Number</Label>
-                    <Input
-                      id="rollNumber"
-                      type="text"
-                      placeholder="Enter your roll number"
-                      value={studentCredentials.rollNumber}
-                      onChange={(e) => setStudentCredentials(prev => ({ ...prev, rollNumber: e.target.value }))}
-                      className="h-12 border-gray-300 focus:border-blue-500 focus:ring-blue-500 rounded-xl"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="studentPassword" className="text-gray-700 font-medium">Password</Label>
-                    <Input
-                      id="studentPassword"
-                      type="password"
-                      placeholder="Enter your password"
-                      value={studentCredentials.password}
-                      onChange={(e) => setStudentCredentials(prev => ({ ...prev, password: e.target.value }))}
-                      className="h-12 border-gray-300 focus:border-blue-500 focus:ring-blue-500 rounded-xl"
-                    />
-                  </div>
-                  <Button 
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => fillDemoCredentials('student')}
-                    className="w-full border-blue-200 text-blue-600 hover:bg-blue-50 rounded-xl"
+          <div className="text-center space-y-2">
+            <h2 className="text-3xl font-bold text-gray-900">Welcome Back</h2>
+            <p className="text-gray-600">Please sign in to your account</p>
+          </div>
+
+          <Card className="border-0 shadow-xl bg-white/80 backdrop-blur-sm">
+            <CardHeader className="space-y-1 text-center pb-6">
+              <CardTitle className="text-xl font-semibold text-gray-900">Account Access</CardTitle>
+              <CardDescription className="text-gray-500">
+                Select your role to continue
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <Tabs defaultValue="student" className="w-full">
+                <TabsList className="grid w-full grid-cols-2 bg-gray-50 p-1 rounded-lg h-12">
+                  <TabsTrigger 
+                    value="student" 
+                    className="flex items-center justify-center space-x-2 data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:border data-[state=active]:border-gray-200 rounded-md transition-all h-10"
                   >
-                    Use Demo Credentials
-                  </Button>
-                  <Button 
-                    type="submit" 
-                    className="w-full h-12 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-medium transition-all duration-200 shadow-lg hover:shadow-xl"
-                    disabled={loading}
+                    <GraduationCap className="h-4 w-4" />
+                    <span className="font-medium">Student</span>
+                  </TabsTrigger>
+                  <TabsTrigger 
+                    value="admin" 
+                    className="flex items-center justify-center space-x-2 data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:border data-[state=active]:border-gray-200 rounded-md transition-all h-10"
                   >
-                    {loading ? (
-                      <Loader2 className="h-5 w-5 animate-spin mr-2" />
-                    ) : (
-                      <GraduationCap className="h-5 w-5 mr-2" />
-                    )}
-                    Sign in as Student
-                  </Button>
-                </form>
-              </TabsContent>
+                    <Shield className="h-4 w-4" />
+                    <span className="font-medium">Admin</span>
+                  </TabsTrigger>
+                </TabsList>
 
-              <TabsContent value="admin" className="mt-6">
-                <form onSubmit={handleAdminLogin} className="space-y-5">
-                  <div className="space-y-2">
-                    <Label htmlFor="email" className="text-gray-700 font-medium">Email</Label>
-                    <Input
-                      id="email"
-                      type="email"
-                      placeholder="Enter your email"
-                      value={adminCredentials.email}
-                      onChange={(e) => setAdminCredentials(prev => ({ ...prev, email: e.target.value }))}
-                      className="h-12 border-gray-300 focus:border-green-500 focus:ring-green-500 rounded-xl"
-                    />
+                <TabsContent value="student" className="mt-6">
+                  <div className="space-y-6">
+                    <div className="space-y-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="rollNumber" className="text-sm font-medium text-gray-700">
+                          Roll Number
+                        </Label>
+                        <Input
+                          id="rollNumber"
+                          type="text"
+                          placeholder="Enter your roll number"
+                          value={studentCredentials.rollNumber}
+                          onChange={(e) => setStudentCredentials(prev => ({ ...prev, rollNumber: e.target.value }))}
+                          className="h-12 border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 rounded-lg text-sm"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="studentPassword" className="text-sm font-medium text-gray-700">
+                          Password
+                        </Label>
+                        <Input
+                          id="studentPassword"
+                          type="password"
+                          placeholder="Enter your password"
+                          value={studentCredentials.password}
+                          onChange={(e) => setStudentCredentials(prev => ({ ...prev, password: e.target.value }))}
+                          className="h-12 border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 rounded-lg text-sm"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="space-y-3">
+                      <Button 
+                        type="button"
+                        variant="outline"
+                        onClick={() => fillDemoCredentials('student')}
+                        className="w-full h-10 border-gray-200 text-gray-600 hover:bg-gray-50 hover:text-gray-700 rounded-lg text-sm font-medium"
+                      >
+                        Use Demo Credentials
+                      </Button>
+                      <Button 
+                        onClick={handleStudentLogin}
+                        className="w-full h-12 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-all duration-200 shadow-lg hover:shadow-xl group"
+                        disabled={loading}
+                      >
+                        {loading ? (
+                          <>
+                            <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                            Signing in...
+                          </>
+                        ) : (
+                          <>
+                            <GraduationCap className="h-4 w-4 mr-2" />
+                            Sign in as Student
+                            <ArrowRight className="h-4 w-4 ml-2 group-hover:translate-x-1 transition-transform" />
+                          </>
+                        )}
+                      </Button>
+                    </div>
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="adminPassword" className="text-gray-700 font-medium">Password</Label>
-                    <Input
-                      id="adminPassword"
-                      type="password"
-                      placeholder="Enter your password"
-                      value={adminCredentials.password}
-                      onChange={(e) => setAdminCredentials(prev => ({ ...prev, password: e.target.value }))}
-                      className="h-12 border-gray-300 focus:border-green-500 focus:ring-green-500 rounded-xl"
-                    />
+                </TabsContent>
+
+                <TabsContent value="admin" className="mt-6">
+                  <div className="space-y-6">
+                    <div className="space-y-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="email" className="text-sm font-medium text-gray-700">
+                          Email Address
+                        </Label>
+                        <Input
+                          id="email"
+                          type="email"
+                          placeholder="Enter your email"
+                          value={adminCredentials.email}
+                          onChange={(e) => setAdminCredentials(prev => ({ ...prev, email: e.target.value }))}
+                          className="h-12 border-gray-200 focus:border-green-500 focus:ring-2 focus:ring-green-500/20 rounded-lg text-sm"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="adminPassword" className="text-sm font-medium text-gray-700">
+                          Password
+                        </Label>
+                        <Input
+                          id="adminPassword"
+                          type="password"
+                          placeholder="Enter your password"
+                          value={adminCredentials.password}
+                          onChange={(e) => setAdminCredentials(prev => ({ ...prev, password: e.target.value }))}
+                          className="h-12 border-gray-200 focus:border-green-500 focus:ring-2 focus:ring-green-500/20 rounded-lg text-sm"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="space-y-3">
+                      <Button 
+                        type="button"
+                        variant="outline"
+                        onClick={() => fillDemoCredentials('admin')}
+                        className="w-full h-10 border-gray-200 text-gray-600 hover:bg-gray-50 hover:text-gray-700 rounded-lg text-sm font-medium"
+                      >
+                        Use Demo Credentials
+                      </Button>
+                      <Button 
+                        onClick={handleAdminLogin}
+                        className="w-full h-12 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium transition-all duration-200 shadow-lg hover:shadow-xl group"
+                        disabled={loading}
+                      >
+                        {loading ? (
+                          <>
+                            <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                            Signing in...
+                          </>
+                        ) : (
+                          <>
+                            <Shield className="h-4 w-4 mr-2" />
+                            Sign in as Admin
+                            <ArrowRight className="h-4 w-4 ml-2 group-hover:translate-x-1 transition-transform" />
+                          </>
+                        )}
+                      </Button>
+                    </div>
                   </div>
-                  <Button 
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => fillDemoCredentials('admin')}
-                    className="w-full border-green-200 text-green-600 hover:bg-green-50 rounded-xl"
-                  >
-                    Use Demo Credentials
-                  </Button>
-                  <Button 
-                    type="submit" 
-                    className="w-full h-12 bg-green-600 hover:bg-green-700 text-white rounded-xl font-medium transition-all duration-200 shadow-lg hover:shadow-xl"
-                    disabled={loading}
-                  >
-                    {loading ? (
-                      <Loader2 className="h-5 w-5 animate-spin mr-2" />
-                    ) : (
-                      <Shield className="h-5 w-5 mr-2" />
-                    )}
-                    Sign in as Admin
-                  </Button>
-                </form>
-              </TabsContent>
-            </Tabs>
+                </TabsContent>
+              </Tabs>
 
-            {error && (
-              <Alert className="mt-4 border-red-200 bg-red-50 rounded-xl">
-                <AlertDescription className="text-red-800">{error}</AlertDescription>
-              </Alert>
-            )}
-          </CardContent>
-        </Card>
+              {error && (
+                <Alert className="border-red-200 bg-red-50 rounded-lg">
+                  <AlertDescription className="text-red-700 text-sm">{error}</AlertDescription>
+                </Alert>
+              )}
+            </CardContent>
+          </Card>
 
-        <div className="text-center text-sm text-gray-500">
-          Secured with Firebase Authentication
+          <div className="text-center">
+            <p className="text-xs text-gray-500">
+              © 2025 Kumaraguru Institutions. All rights reserved.
+            </p>
+          </div>
         </div>
       </div>
     </div>

@@ -1,8 +1,7 @@
-import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from '@/contexts/AuthContext';
 import { ProtectedRoute } from '@/components/shared/ProtectedRoute';
-import { LoginPage } from '@/components/auth/LoginPage';
+import LoginPage from '@/components/auth/LoginPage';
 import { AdminLayout } from '@/components/admin/AdminLayout';
 import { AdminDashboard } from '@/components/admin/Dashboard';
 import { EventManagement } from '@/components/admin/EventManagement';
