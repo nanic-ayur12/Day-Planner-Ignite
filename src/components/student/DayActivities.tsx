@@ -521,15 +521,17 @@ export const DayActivities: React.FC = () => {
         </div>
         
         <Alert className="border border-blue-200 bg-blue-50">
-          <Clock className="h-4 w-4" />
-          <AlertDescription className="text-blue-800">
-            {renderPhaseMessage()} • Current time: {currentTime.toLocaleTimeString()}
-          </AlertDescription>
+          <div className="flex items-center justify-center space-x-2">
+            <Clock className="h-4 w-4" />
+            <AlertDescription className="text-blue-800 text-center">
+              {renderPhaseMessage()} • Current time: {currentTime.toLocaleTimeString()}
+            </AlertDescription>
+          </div>
         </Alert>
 
         <div className="flex flex-col sm:flex-row sm:items-center space-y-2 sm:space-y-0 sm:space-x-4">
           <div className="flex items-center space-x-2">
-            
+            <Calendar className="h-4 w-4 text-gray-600" />
             <Input
               type="date"
               value={selectedDate}
