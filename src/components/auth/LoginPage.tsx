@@ -6,7 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Loader2, Activity, GraduationCap, Shield, ArrowRight } from 'lucide-react';
+import { Loader2, Activity, GraduationCap, Shield, ArrowRight, AlertTriangle } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 
@@ -15,14 +15,44 @@ export default function LoginPage() {
   const [adminCredentials, setAdminCredentials] = useState({ email: '', password: '' });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [rateLimited, setRateLimited] = useState(false);
+  const [attemptCount, setAttemptCount] = useState(0);
   const { login } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
+
+  const getErrorMessage = (error: any) => {
+    const errorCode = error?.code || '';
+    
+    switch (errorCode) {
+      case 'auth/too-many-requests':
+        setRateLimited(true);
+        return 'Too many failed login attempts. Please wait a few minutes before trying again.';
+      case 'auth/user-not-found':
+      case 'auth/wrong-password':
+      case 'auth/invalid-credential':
+        return 'Invalid credentials. Please check your login details and try again.';
+      case 'auth/user-disabled':
+        return 'This account has been disabled. Please contact support.';
+      case 'auth/invalid-email':
+        return 'Please enter a valid email address.';
+      case 'auth/network-request-failed':
+        return 'Network error. Please check your internet connection and try again.';
+      default:
+        return 'Login failed. Please check your credentials and try again.';
+    }
+  };
 
   const handleStudentLogin = async (e: { preventDefault: () => void; }) => {
     e.preventDefault();
     if (!studentCredentials.rollNumber || !studentCredentials.password) {
       setError('Please fill in all fields');
+      return;
+    }
+
+    // Prevent further attempts if rate limited
+    if (rateLimited) {
+      setError('Please wait a few minutes before attempting to login again.');
       return;
     }
 
@@ -35,9 +65,26 @@ export default function LoginPage() {
         title: "Login Successful!",
         description: "Welcome to your student dashboard",
       });
+      // Reset attempt count on successful login
+      setAttemptCount(0);
+      setRateLimited(false);
       navigate('/student');
     } catch (error) {
-      setError('Invalid roll number or password');
+      console.error('Login error:', error);
+      const newAttemptCount = attemptCount + 1;
+      setAttemptCount(newAttemptCount);
+      
+      const errorMessage = getErrorMessage(error);
+      setError(errorMessage);
+      
+      // Show warning after 3 failed attempts
+      if (newAttemptCount >= 3 && !rateLimited) {
+        toast({
+          title: "Multiple Failed Attempts",
+          description: "Please double-check your credentials to avoid temporary lockout.",
+          variant: "destructive",
+        });
+      }
     } finally {
       setLoading(false);
     }
@@ -50,6 +97,12 @@ export default function LoginPage() {
       return;
     }
 
+    // Prevent further attempts if rate limited
+    if (rateLimited) {
+      setError('Please wait a few minutes before attempting to login again.');
+      return;
+    }
+
     setLoading(true);
     setError('');
 
@@ -59,9 +112,26 @@ export default function LoginPage() {
         title: "Login Successful!",
         description: "Welcome to your admin dashboard",
       });
+      // Reset attempt count on successful login
+      setAttemptCount(0);
+      setRateLimited(false);
       navigate('/admin');
     } catch (error) {
-      setError('Invalid email or password');
+      console.error('Login error:', error);
+      const newAttemptCount = attemptCount + 1;
+      setAttemptCount(newAttemptCount);
+      
+      const errorMessage = getErrorMessage(error);
+      setError(errorMessage);
+      
+      // Show warning after 3 failed attempts
+      if (newAttemptCount >= 3 && !rateLimited) {
+        toast({
+          title: "Multiple Failed Attempts",
+          description: "Please double-check your credentials to avoid temporary lockout.",
+          variant: "destructive",
+        });
+      }
     } finally {
       setLoading(false);
     }
@@ -119,6 +189,16 @@ export default function LoginPage() {
             <p className="text-gray-600">Please sign in to your account</p>
           </div>
 
+          {/* Rate limit warning */}
+          {rateLimited && (
+            <Alert className="border-amber-200 bg-amber-50 rounded-lg">
+              <AlertTriangle className="h-4 w-4 text-amber-600" />
+              <AlertDescription className="text-amber-700 text-sm font-medium">
+                Account temporarily locked due to multiple failed attempts. Please wait 5-10 minutes before trying again.
+              </AlertDescription>
+            </Alert>
+          )}
+
           <Card className="border-0 shadow-xl bg-white">
             <CardHeader className="space-y-1 text-center pb-6">
               <CardTitle className="text-xl font-semibold text-black">Account Access</CardTitle>
@@ -159,6 +239,7 @@ export default function LoginPage() {
                           value={studentCredentials.rollNumber}
                           onChange={(e) => setStudentCredentials(prev => ({ ...prev, rollNumber: e.target.value }))}
                           className="h-12 border-gray-200 focus:border-blue-500 focus:ring-0 focus-visible:ring-0 rounded-lg text-sm"
+                          disabled={rateLimited}
                         />
                       </div>
                       <div className="space-y-2">
@@ -172,6 +253,7 @@ export default function LoginPage() {
                           value={studentCredentials.password}
                           onChange={(e) => setStudentCredentials(prev => ({ ...prev, password: e.target.value }))}
                           className="h-12 border-gray-200 focus:border-blue-500 focus:ring-0 focus-visible:ring-0 rounded-lg text-sm"
+                          disabled={rateLimited}
                         />
                       </div>
                     </div>
@@ -179,13 +261,18 @@ export default function LoginPage() {
                     <div className="space-y-3">
                       <Button 
                         type="submit"
-                        className="w-full h-12 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-all duration-200 shadow-lg hover:shadow-xl group focus:outline-none focus:ring-0 focus-visible:ring-0"
-                        disabled={loading}
+                        className="w-full h-12 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-all duration-200 shadow-lg hover:shadow-xl group focus:outline-none focus:ring-0 focus-visible:ring-0 disabled:opacity-50 disabled:cursor-not-allowed"
+                        disabled={loading || rateLimited}
                       >
                         {loading ? (
                           <>
                             <Loader2 className="h-4 w-4 animate-spin mr-2" />
                             Signing in...
+                          </>
+                        ) : rateLimited ? (
+                          <>
+                            <AlertTriangle className="h-4 w-4 mr-2" />
+                            Please wait...
                           </>
                         ) : (
                           <>
@@ -213,6 +300,7 @@ export default function LoginPage() {
                           value={adminCredentials.email}
                           onChange={(e) => setAdminCredentials(prev => ({ ...prev, email: e.target.value }))}
                           className="h-12 border-gray-200 focus:border-green-500 focus:ring-0 focus-visible:ring-0 rounded-lg text-sm"
+                          disabled={rateLimited}
                         />
                       </div>
                       <div className="space-y-2">
@@ -226,6 +314,7 @@ export default function LoginPage() {
                           value={adminCredentials.password}
                           onChange={(e) => setAdminCredentials(prev => ({ ...prev, password: e.target.value }))}
                           className="h-12 border-gray-200 focus:border-green-500 focus:ring-0 focus-visible:ring-0 rounded-lg text-sm"
+                          disabled={rateLimited}
                         />
                       </div>
                     </div>
@@ -233,13 +322,18 @@ export default function LoginPage() {
                     <div className="space-y-3">
                       <Button 
                         type="submit"
-                        className="w-full h-12 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium transition-all duration-200 shadow-lg hover:shadow-xl group focus:outline-none focus:ring-0 focus-visible:ring-0"
-                        disabled={loading}
+                        className="w-full h-12 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium transition-all duration-200 shadow-lg hover:shadow-xl group focus:outline-none focus:ring-0 focus-visible:ring-0 disabled:opacity-50 disabled:cursor-not-allowed"
+                        disabled={loading || rateLimited}
                       >
                         {loading ? (
                           <>
                             <Loader2 className="h-4 w-4 animate-spin mr-2" />
                             Signing in...
+                          </>
+                        ) : rateLimited ? (
+                          <>
+                            <AlertTriangle className="h-4 w-4 mr-2" />
+                            Please wait...
                           </>
                         ) : (
                           <>
@@ -255,8 +349,21 @@ export default function LoginPage() {
               </Tabs>
 
               {error && (
-                <Alert className="border-red-200 bg-red-50 rounded-lg">
-                  <AlertDescription className="text-red-700 text-sm font-medium">{error}</AlertDescription>
+                <Alert className={`rounded-lg ${rateLimited ? 'border-amber-200 bg-amber-50' : 'border-red-200 bg-red-50'}`}>
+                  {rateLimited && <AlertTriangle className="h-4 w-4 text-amber-600" />}
+                  <AlertDescription className={`text-sm font-medium ${rateLimited ? 'text-amber-700' : 'text-red-700'}`}>
+                    {error}
+                  </AlertDescription>
+                </Alert>
+              )}
+
+              {attemptCount >= 2 && !rateLimited && (
+                <Alert className="border-yellow-200 bg-yellow-50 rounded-lg">
+                  <AlertTriangle className="h-4 w-4 text-yellow-600" />
+                  <AlertDescription className="text-yellow-700 text-sm">
+                    {attemptCount === 2 ? 'One more failed attempt may temporarily lock your account.' : 
+                     'Multiple failed attempts detected. Please verify your credentials carefully.'}
+                  </AlertDescription>
                 </Alert>
               )}
             </CardContent>
