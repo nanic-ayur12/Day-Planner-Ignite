@@ -298,7 +298,7 @@ export const EventManagement: React.FC = () => {
               Create Event
             </Button>
           </DialogTrigger>
-          <DialogContent>
+          <DialogContent className="bg-white">
             <DialogHeader>
               <DialogTitle>Create New Event</DialogTitle>
               <DialogDescription>
@@ -436,7 +436,7 @@ export const EventManagement: React.FC = () => {
                       Add Task
                     </Button>
                   </DialogTrigger>
-                  <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+                  <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto bg-white">
                     <DialogHeader>
                       <DialogTitle>Create Event Plan</DialogTitle>
                       <DialogDescription>
@@ -584,15 +584,17 @@ export const EventManagement: React.FC = () => {
                 </Dialog>
               </div>
 
-              {/* Kanban Board */}
+              {/* Kanban Board with Horizontal Scrolling */}
               <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
                 <div className="overflow-x-auto">
-                  <div className="min-w-max">
+                  <div style={{ minWidth: `${120 + (dateRange.length * 200)}px` }}>
                     {/* Header with dates */}
-                    <div className="grid grid-cols-[120px_repeat(auto-fit,_200px)] gap-1 bg-gray-50 p-2">
-                      <div className="font-semibold text-black p-3 text-center">Time</div>
+                    <div className="flex bg-gray-50 border-b border-gray-200">
+                      <div className="w-[120px] flex-shrink-0 font-semibold text-black p-3 text-center border-r border-gray-200">
+                        Time
+                      </div>
                       {dateRange.map((date, index) => (
-                        <div key={index} className="font-semibold text-black p-3 text-center border-l border-gray-200">
+                        <div key={index} className="w-[200px] flex-shrink-0 font-semibold text-black p-3 text-center border-r border-gray-200">
                           <div>{date.toLocaleDateString('en-US', { weekday: 'short' })}</div>
                           <div className="text-sm text-gray-600">{date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</div>
                         </div>
@@ -601,14 +603,14 @@ export const EventManagement: React.FC = () => {
 
                     {/* Time slots with plans */}
                     {timeSlots.map((timeSlot) => (
-                      <div key={timeSlot.time24} className="grid grid-cols-[120px_repeat(auto-fit,_200px)] gap-1 border-t border-gray-200">
-                        <div className="p-3 bg-gray-50 font-medium text-black text-center border-r border-gray-200">
+                      <div key={timeSlot.time24} className="flex border-b border-gray-200">
+                        <div className="w-[120px] flex-shrink-0 p-3 bg-gray-50 font-medium text-black text-center border-r border-gray-200">
                           {timeSlot.time12}
                         </div>
                         {dateRange.map((date, dateIndex) => {
                           const plans = getPlansForDateTime(date, timeSlot.time12);
                           return (
-                            <div key={dateIndex} className="p-2 min-h-[80px] border-l border-gray-200 bg-white">
+                            <div key={dateIndex} className="w-[200px] flex-shrink-0 p-2 min-h-[80px] border-r border-gray-200 bg-white">
                               {plans.map((plan) => (
                                 <div
                                   key={plan.id}
@@ -650,7 +652,7 @@ export const EventManagement: React.FC = () => {
 
       {/* Edit Event Dialog */}
       <Dialog open={!!editingEvent} onOpenChange={() => setEditingEvent(null)}>
-        <DialogContent>
+        <DialogContent className="bg-white">
           <DialogHeader>
             <DialogTitle>Edit Event Dates</DialogTitle>
             <DialogDescription>

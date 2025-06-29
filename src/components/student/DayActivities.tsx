@@ -18,8 +18,7 @@ import {
   Eye,
   Sunrise,
   Sun,
-  Moon,
-  Link as LinkIcon
+  Moon
 } from 'lucide-react';
 
 // Mock data for demonstration
@@ -70,7 +69,7 @@ const getTimePhase = () => {
   const hour = now.getHours();
   
   if (hour >= 0 && hour < 9) return 'preview';
-  if (hour >= 9 && hour < 18) return 'active';
+  if (hour >= 9 && hour < 24) return 'active'; // Extended to allow submissions until 11:59 PM
   return 'review';
 };
 
@@ -85,18 +84,12 @@ const getActivityStatus = (activity: any, currentTime: Date) => {
   
   activityTime.setHours(hour24, parseInt(minutes), 0, 0);
   
-  const endTime = new Date();
-  const [endTimeStr, endPeriod] = activity.endTime.split(' ');
-  const [endHours, endMinutes] = endTimeStr.split(':');
-  
-  let endHour24 = parseInt(endHours);
-  if (endPeriod === 'PM' && endHour24 !== 12) endHour24 += 12;
-  if (endPeriod === 'AM' && endHour24 === 12) endHour24 = 0;
-  
-  endTime.setHours(endHour24, parseInt(endMinutes), 0, 0);
+  // Allow submissions until end of day (11:59 PM)
+  const endOfDay = new Date();
+  endOfDay.setHours(23, 59, 59, 999);
   
   if (currentTime < activityTime) return 'upcoming';
-  if (currentTime >= activityTime && currentTime <= endTime) return 'ongoing';
+  if (currentTime >= activityTime && currentTime <= endOfDay) return 'ongoing';
   return 'completed';
 };
 
@@ -139,7 +132,11 @@ export const DayActivities: React.FC = () => {
       }
     }));
     
-    setUploadProgress(prev => ({ ...prev, [activityId]: undefined }));
+    setUploadProgress(prev => {
+      const newProgress = { ...prev };
+      delete newProgress[activityId];
+      return newProgress;
+    });
   };
 
   const handleTextSubmission = (activityId: string, text: string) => {
@@ -159,9 +156,9 @@ export const DayActivities: React.FC = () => {
       case 'preview':
         return <Sunrise className="h-5 w-5 text-orange-600" />;
       case 'active':
-        return <Sun className="h-5 w-5 text-yellow-600" />;
+        return <Sun className="h-5 w-5 text-blue-600" />;
       case 'review':
-        return <Moon className="h-5 w-5 text-blue-600" />;
+        return <Moon className="h-5 w-5 text-purple-600" />;
     }
   };
 
@@ -170,7 +167,7 @@ export const DayActivities: React.FC = () => {
       case 'preview':
         return 'Good morning! Here\'s a preview of today\'s activities';
       case 'active':
-        return 'Activities are now active. Join the ongoing sessions!';
+        return 'Activities are active. You can submit work until 11:59 PM today!';
       case 'review':
         return 'Day completed! Review today\'s activities and catch up on submissions';
     }
@@ -181,11 +178,8 @@ export const DayActivities: React.FC = () => {
       return todayActivities;
     }
     
-    // During active phase, show only current and past activities
-    return todayActivities.filter(activity => {
-      const status = getActivityStatus(activity, currentTime);
-      return status === 'completed' || status === 'ongoing';
-    });
+    // During active phase, show all activities (can submit until EOD)
+    return todayActivities;
   };
 
   const renderSubmissionInterface = (activity: any) => {
@@ -216,7 +210,7 @@ export const DayActivities: React.FC = () => {
       return (
         <div className="mt-4 space-y-4">
           <div>
-            <Label htmlFor={`file-${activity.id}`} className="text-sm font-medium text-gray-700">
+            <Label htmlFor={`file-${activity.id}`} className="text-sm font-medium text-black">
               Upload File (Max: {activity.fileSizeLimit}MB)
             </Label>
             <Input
@@ -239,8 +233,8 @@ export const DayActivities: React.FC = () => {
           {progress !== undefined && (
             <div className="space-y-2">
               <div className="flex items-center justify-between text-sm">
-                <span className="text-gray-700">Uploading...</span>
-                <span className="text-gray-700">{progress}%</span>
+                <span className="text-black">Uploading...</span>
+                <span className="text-black">{progress}%</span>
               </div>
               <Progress value={progress} className="w-full" />
             </div>
@@ -253,7 +247,7 @@ export const DayActivities: React.FC = () => {
       return (
         <div className="mt-4 space-y-4">
           <div>
-            <Label htmlFor={`text-${activity.id}`} className="text-sm font-medium text-gray-700">
+            <Label htmlFor={`text-${activity.id}`} className="text-sm font-medium text-black">
               Your Response
             </Label>
             <Textarea
@@ -282,10 +276,10 @@ export const DayActivities: React.FC = () => {
       {/* Header */}
       <div className="space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <h1 className="text-3xl font-bold text-gray-900">Today's Activities</h1>
+          <h1 className="text-3xl font-bold text-black">Today's Activities</h1>
           <div className="flex items-center space-x-2">
             {renderPhaseIcon()}
-            <Badge variant="secondary" className="text-sm bg-gray-100 text-gray-800">
+            <Badge variant="secondary" className="text-sm bg-gray-100 text-black">
               {timePhase === 'preview' ? 'Preview Mode' : 
                timePhase === 'active' ? 'Active Mode' : 
                'Review Mode'}
@@ -319,7 +313,7 @@ export const DayActivities: React.FC = () => {
           <Card className="border border-gray-200 p-8 text-center">
             <CardContent>
               <Calendar className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">No Activities Today</h3>
+              <h3 className="text-lg font-medium text-black mb-2">No Activities Today</h3>
               <p className="text-gray-600">Check back later or select a different date.</p>
             </CardContent>
           </Card>
@@ -338,7 +332,7 @@ export const DayActivities: React.FC = () => {
                   <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-4">
                     <div className="space-y-3 flex-1">
                       <div className="flex flex-wrap items-center gap-3">
-                        <CardTitle className="text-lg text-gray-900">{activity.title}</CardTitle>
+                        <CardTitle className="text-lg text-black">{activity.title}</CardTitle>
                         <Badge 
                           variant="default"
                           className={
@@ -377,13 +371,13 @@ export const DayActivities: React.FC = () => {
                             View Details
                           </Button>
                         </DialogTrigger>
-                        <DialogContent className="max-w-2xl">
+                        <DialogContent className="max-w-2xl bg-white">
                           <DialogHeader>
-                            <DialogTitle className="text-gray-900">{activity.title}</DialogTitle>
+                            <DialogTitle className="text-black">{activity.title}</DialogTitle>
                             <DialogDescription className="text-gray-600">{activity.time} - {activity.endTime}</DialogDescription>
                           </DialogHeader>
                           <div className="space-y-4">
-                            <p className="text-gray-700">{activity.description}</p>
+                            <p className="text-black">{activity.description}</p>
                             {activity.planType === 'withSubmission' && renderSubmissionInterface(activity)}
                           </div>
                         </DialogContent>
@@ -392,7 +386,7 @@ export const DayActivities: React.FC = () => {
                   </div>
                   
                   {timePhase !== 'preview' && (
-                    <CardDescription className="text-base text-gray-700">
+                    <CardDescription className="text-base text-black">
                       {activity.description}
                     </CardDescription>
                   )}
@@ -410,10 +404,10 @@ export const DayActivities: React.FC = () => {
       </div>
 
       {/* Footer Info */}
-      <div className="text-center text-sm text-gray-600 space-y-2 p-4 bg-gray-50 rounded-lg border border-gray-200">
+      <div className="text-center text-sm text-gray-600 space-y-2 p-4 bg-white rounded-lg border border-gray-200">
         <p>
           {timePhase === 'preview' && 'Full activity details will be available from 9:00 AM'}
-          {timePhase === 'active' && 'New activities will appear automatically as they become available'}
+          {timePhase === 'active' && 'You can submit your work for any activity until 11:59 PM today'}
           {timePhase === 'review' && 'Click "View Details" to see full information and submit if you missed anything'}
         </p>
         <p className="flex items-center justify-center space-x-1">
