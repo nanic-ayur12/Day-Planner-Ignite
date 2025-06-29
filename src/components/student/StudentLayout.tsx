@@ -33,7 +33,7 @@ export const StudentLayout: React.FC = () => {
     if (!hasShownToast) {
       toast({
         title: "Login Successful!",
-        description: "Welcome to your student dashboard",
+        description: "Welcome to student dashboard",
       });
       sessionStorage.setItem('studentLoginToastShown', 'true');
     }
