@@ -469,18 +469,18 @@ export const AdminDashboard: React.FC = () => {
       </div>
 
       {/* Sidebar Footer */}
-      <!-- <div className="p-4">
+       <div className="p-4">
         <div className="bg-gray-50 p-3 rounded-lg border border-gray-200">
           <div className="flex items-center space-x-3">
             <div className="p-2 bg-blue-100 rounded-lg">
               <Activity className="h-4 w-4 text-blue-600" />
             </div>
             <div>
-              <p className="text-sm font-semibold text-black">Ignite Student Portal</p>
-              <p className="text-xs text-gray-600">Kumaraguru Institutions</p>
+              <p className="text-sm font-semibold text-black"></p>
+              <p className="text-xs text-gray-600"></p>
             </div>
           </div>
-        </div> -->
+        </div> 
       </div>
     </div>
   );
