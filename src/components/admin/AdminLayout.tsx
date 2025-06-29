@@ -15,25 +15,20 @@ import {
   Calendar,
   Users,
   BarChart3,
-  Settings,
   LogOut,
   Menu,
   X,
   Home,
   Upload,
   Activity,
-  Bell,
-  Search,
 } from 'lucide-react';
 
 const sidebarItems = [
   { icon: Home, label: 'Dashboard', path: '/admin', color: 'text-blue-600' },
   { icon: Calendar, label: 'Events', path: '/admin/events', color: 'text-green-600' },
-  { icon: Activity, label: 'Event Plans', path: '/admin/plans', color: 'text-orange-600' },
   { icon: Users, label: 'User Management', path: '/admin/users', color: 'text-purple-600' },
   { icon: Upload, label: 'Submissions', path: '/admin/submissions', color: 'text-red-600' },
   { icon: BarChart3, label: 'Analytics', path: '/admin/analytics', color: 'text-indigo-600' },
-  { icon: Settings, label: 'Settings', path: '/admin/settings', color: 'text-gray-600' },
 ];
 
 export const AdminLayout: React.FC = () => {
@@ -152,20 +147,16 @@ export const AdminLayout: React.FC = () => {
                   year: 'numeric', 
                   month: 'long', 
                   day: 'numeric' 
+                })} • {new Date().toLocaleTimeString('en-US', { 
+                  hour: '2-digit', 
+                  minute: '2-digit',
+                  hour12: true 
                 })}
               </p>
             </div>
           </div>
 
           <div className="flex items-center space-x-4">
-            <Button variant="ghost" size="sm" className="hidden sm:flex">
-              <Search className="h-5 w-5" />
-            </Button>
-            <Button variant="ghost" size="sm" className="relative">
-              <Bell className="h-5 w-5" />
-              <span className="absolute -top-1 -right-1 h-3 w-3 bg-red-500 rounded-full"></span>
-            </Button>
-            
             <div className="text-right hidden sm:block">
               <p className="text-sm font-semibold text-black">{userProfile?.name}</p>
               <p className="text-xs text-gray-500">{userProfile?.email}</p>

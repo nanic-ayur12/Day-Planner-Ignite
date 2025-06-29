@@ -18,63 +18,27 @@ import {
   Eye,
   Sunrise,
   Sun,
-  Moon
+  Moon,
+  Send
 } from 'lucide-react';
-
-// Mock data for demonstration
-const todayActivities = [
-  {
-    id: '1',
-    title: 'Morning Assembly',
-    description: 'Welcome session for all freshers with college introduction and brigade formation',
-    time: '09:00 AM',
-    planType: 'withoutSubmission',
-    status: 'completed',
-    endTime: '10:00 AM'
-  },
-  {
-    id: '2',
-    title: 'Ice Breaker Activities',
-    description: 'Fun activities to help students get to know each other within their brigades',
-    time: '10:30 AM',
-    planType: 'withSubmission',
-    submissionType: 'file',
-    fileSizeLimit: 5,
-    status: 'ongoing',
-    endTime: '12:00 PM'
-  },
-  {
-    id: '3',
-    title: 'Leadership Workshop',
-    description: 'Interactive workshop on leadership skills and team building exercises',
-    time: '02:00 PM',
-    planType: 'withSubmission',
-    submissionType: 'text',
-    status: 'upcoming',
-    endTime: '04:00 PM'
-  },
-  {
-    id: '4',
-    title: 'Cultural Performance',
-    description: 'Showcase of talents and cultural performances by students',
-    time: '04:30 PM',
-    planType: 'withoutSubmission',
-    status: 'upcoming',
-    endTime: '06:00 PM'
-  }
-];
+import { collection, getDocs, addDoc, query, where } from 'firebase/firestore';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { db, storage } from '@/lib/firebase';
+import { useAuth } from '@/contexts/AuthContext';
+import { EventPlan, Submission } from '@/types';
+import { useToast } from '@/hooks/use-toast';
 
 const getTimePhase = () => {
   const now = new Date();
   const hour = now.getHours();
   
   if (hour >= 0 && hour < 9) return 'preview';
-  if (hour >= 9 && hour < 24) return 'active'; // Extended to allow submissions until 11:59 PM
+  if (hour >= 9 && hour < 24) return 'active';
   return 'review';
 };
 
-const getActivityStatus = (activity: any, currentTime: Date) => {
-  const activityTime = new Date();
+const getActivityStatus = (activity: EventPlan, currentTime: Date) => {
+  const activityTime = new Date(activity.date);
   const [time, period] = activity.time.split(' ');
   const [hours, minutes] = time.split(':');
   
@@ -84,8 +48,7 @@ const getActivityStatus = (activity: any, currentTime: Date) => {
   
   activityTime.setHours(hour24, parseInt(minutes), 0, 0);
   
-  // Allow submissions until end of day (11:59 PM)
-  const endOfDay = new Date();
+  const endOfDay = new Date(activity.date);
   endOfDay.setHours(23, 59, 59, 999);
   
   if (currentTime < activityTime) return 'upcoming';
@@ -97,8 +60,13 @@ export const DayActivities: React.FC = () => {
   const [currentTime, setCurrentTime] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
   const [timePhase, setTimePhase] = useState(getTimePhase());
+  const [eventPlans, setEventPlans] = useState<EventPlan[]>([]);
+  const [submissions, setSubmissions] = useState<Submission[]>([]);
   const [submissionData, setSubmissionData] = useState<{[key: string]: any}>({});
   const [uploadProgress, setUploadProgress] = useState<{[key: string]: number}>({});
+  const [loading, setLoading] = useState(false);
+  const { userProfile } = useAuth();
+  const { toast } = useToast();
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -110,45 +78,223 @@ export const DayActivities: React.FC = () => {
     return () => clearInterval(timer);
   }, []);
 
-  const handleFileUpload = async (activityId: string, file: File) => {
-    if (!file) return;
+  useEffect(() => {
+    if (userProfile?.id) {
+      fetchTodayActivities();
+      fetchUserSubmissions();
+    }
+  }, [userProfile, selectedDate]);
 
-    // Simulate file upload progress
+  const fetchTodayActivities = async () => {
+    try {
+      const today = new Date(selectedDate);
+      const startOfDay = new Date(today);
+      startOfDay.setHours(0, 0, 0, 0);
+      const endOfDay = new Date(today);
+      endOfDay.setHours(23, 59, 59, 999);
+
+      const eventPlansSnapshot = await getDocs(collection(db, 'eventPlans'));
+      const plansData = eventPlansSnapshot.docs
+        .map(doc => ({
+          id: doc.id,
+          ...doc.data(),
+          date: doc.data().date.toDate(),
+          createdAt: doc.data().createdAt.toDate()
+        })) as EventPlan[];
+
+      const todayPlans = plansData.filter(plan => {
+        const planDate = plan.date.toDateString();
+        const selectedDateObj = new Date(selectedDate).toDateString();
+        return planDate === selectedDateObj;
+      });
+
+      setEventPlans(todayPlans);
+    } catch (error) {
+      console.error('Error fetching activities:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load today's activities",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const fetchUserSubmissions = async () => {
+    if (!userProfile?.id) return;
+    
+    try {
+      const submissionsQuery = query(
+        collection(db, 'submissions'),
+        where('studentId', '==', userProfile.id)
+      );
+      const submissionsSnapshot = await getDocs(submissionsQuery);
+      const submissionsData = submissionsSnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data(),
+        submittedAt: doc.data().submittedAt.toDate()
+      })) as Submission[];
+
+      setSubmissions(submissionsData);
+    } catch (error) {
+      console.error('Error fetching submissions:', error);
+    }
+  };
+
+  const handleFileUpload = async (activityId: string, file: File) => {
+    if (!file || !userProfile?.id) return;
+
+    setLoading(true);
     setUploadProgress(prev => ({ ...prev, [activityId]: 0 }));
     
-    for (let progress = 0; progress <= 100; progress += 10) {
-      await new Promise(resolve => setTimeout(resolve, 200));
-      setUploadProgress(prev => ({ ...prev, [activityId]: progress }));
-    }
+    try {
+      // Upload file to Firebase Storage
+      const storageRef = ref(storage, `submissions/${userProfile.id}/${activityId}/${file.name}`);
+      
+      // Simulate progress for better UX
+      for (let progress = 0; progress <= 90; progress += 10) {
+        await new Promise(resolve => setTimeout(resolve, 100));
+        setUploadProgress(prev => ({ ...prev, [activityId]: progress }));
+      }
 
-    setSubmissionData(prev => ({
-      ...prev,
-      [activityId]: {
-        type: 'file',
+      const uploadResult = await uploadBytes(storageRef, file);
+      const downloadURL = await getDownloadURL(uploadResult.ref);
+
+      setUploadProgress(prev => ({ ...prev, [activityId]: 100 }));
+
+      // Save submission to Firestore
+      const submissionData = {
+        studentId: userProfile.id,
+        eventPlanId: activityId,
+        submissionType: 'file' as const,
+        fileUrl: downloadURL,
         fileName: file.name,
         fileSize: file.size,
         submittedAt: new Date(),
-        status: 'submitted'
-      }
-    }));
-    
-    setUploadProgress(prev => {
-      const newProgress = { ...prev };
-      delete newProgress[activityId];
-      return newProgress;
-    });
+        status: 'submitted' as const
+      };
+
+      await addDoc(collection(db, 'submissions'), submissionData);
+
+      setSubmissionData(prev => ({
+        ...prev,
+        [activityId]: {
+          type: 'file',
+          fileName: file.name,
+          fileSize: file.size,
+          submittedAt: new Date(),
+          status: 'submitted'
+        }
+      }));
+
+      toast({
+        title: "Success!",
+        description: "File uploaded and submitted successfully",
+      });
+
+      fetchUserSubmissions();
+    } catch (error) {
+      console.error('Error uploading file:', error);
+      toast({
+        title: "Error",
+        description: "Failed to upload file. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+      setUploadProgress(prev => {
+        const newProgress = { ...prev };
+        delete newProgress[activityId];
+        return newProgress;
+      });
+    }
   };
 
-  const handleTextSubmission = (activityId: string, text: string) => {
-    setSubmissionData(prev => ({
-      ...prev,
-      [activityId]: {
-        type: 'text',
+  const handleTextSubmission = async (activityId: string, text: string) => {
+    if (!text.trim() || !userProfile?.id) return;
+
+    setLoading(true);
+    try {
+      const submissionData = {
+        studentId: userProfile.id,
+        eventPlanId: activityId,
+        submissionType: 'text' as const,
         content: text,
         submittedAt: new Date(),
-        status: 'submitted'
-      }
-    }));
+        status: 'submitted' as const
+      };
+
+      await addDoc(collection(db, 'submissions'), submissionData);
+
+      setSubmissionData(prev => ({
+        ...prev,
+        [activityId]: {
+          type: 'text',
+          content: text,
+          submittedAt: new Date(),
+          status: 'submitted'
+        }
+      }));
+
+      toast({
+        title: "Success!",
+        description: "Text submission saved successfully",
+      });
+
+      fetchUserSubmissions();
+    } catch (error) {
+      console.error('Error submitting text:', error);
+      toast({
+        title: "Error",
+        description: "Failed to submit text. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleLinkSubmission = async (activityId: string, link: string) => {
+    if (!link.trim() || !userProfile?.id) return;
+
+    setLoading(true);
+    try {
+      const submissionData = {
+        studentId: userProfile.id,
+        eventPlanId: activityId,
+        submissionType: 'link' as const,
+        content: link,
+        submittedAt: new Date(),
+        status: 'submitted' as const
+      };
+
+      await addDoc(collection(db, 'submissions'), submissionData);
+
+      setSubmissionData(prev => ({
+        ...prev,
+        [activityId]: {
+          type: 'link',
+          content: link,
+          submittedAt: new Date(),
+          status: 'submitted'
+        }
+      }));
+
+      toast({
+        title: "Success!",
+        description: "Link submission saved successfully",
+      });
+
+      fetchUserSubmissions();
+    } catch (error) {
+      console.error('Error submitting link:', error);
+      toast({
+        title: "Error",
+        description: "Failed to submit link. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   const renderPhaseIcon = () => {
@@ -175,18 +321,21 @@ export const DayActivities: React.FC = () => {
 
   const getVisibleActivities = () => {
     if (timePhase === 'preview' || timePhase === 'review') {
-      return todayActivities;
+      return eventPlans;
     }
-    
-    // During active phase, show all activities (can submit until EOD)
-    return todayActivities;
+    return eventPlans;
   };
 
-  const renderSubmissionInterface = (activity: any) => {
-    const submission = submissionData[activity.id];
-    const progress = uploadProgress[activity.id];
+  const isSubmitted = (activityId: string) => {
+    return submissions.some(sub => sub.eventPlanId === activityId) || submissionData[activityId];
+  };
 
-    if (submission) {
+  const renderSubmissionInterface = (activity: EventPlan) => {
+    const submission = submissionData[activity.id] || submissions.find(sub => sub.eventPlanId === activity.id);
+    const progress = uploadProgress[activity.id];
+    const submitted = isSubmitted(activity.id);
+
+    if (submitted) {
       return (
         <div className="mt-4 p-4 bg-green-50 border border-green-200 rounded-lg">
           <div className="flex items-center space-x-2">
@@ -194,13 +343,15 @@ export const DayActivities: React.FC = () => {
             <span className="text-green-800 font-medium">Submitted Successfully</span>
           </div>
           <p className="text-sm text-green-700 mt-1">
-            {submission.type === 'file' 
-              ? `File: ${submission.fileName} (${(submission.fileSize / 1024 / 1024).toFixed(2)} MB)`
-              : `Text submission: ${submission.content.substring(0, 50)}...`
+            {submission?.submissionType === 'file' 
+              ? `File: ${submission.fileName || 'File uploaded'}`
+              : submission?.submissionType === 'text'
+              ? `Text: ${submission.content?.substring(0, 50)}...`
+              : `Link: ${submission.content}`
             }
           </p>
           <p className="text-xs text-green-600 mt-1">
-            Submitted at: {submission.submittedAt.toLocaleTimeString()}
+            Submitted at: {(submission?.submittedAt || new Date()).toLocaleString()}
           </p>
         </div>
       );
@@ -220,14 +371,18 @@ export const DayActivities: React.FC = () => {
               onChange={(e) => {
                 const file = e.target.files?.[0];
                 if (file) {
-                  if (file.size > activity.fileSizeLimit * 1024 * 1024) {
-                    alert(`File size exceeds ${activity.fileSizeLimit}MB limit`);
+                  if (file.size > (activity.fileSizeLimit || 5) * 1024 * 1024) {
+                    toast({
+                      title: "File too large",
+                      description: `File size exceeds ${activity.fileSizeLimit}MB limit`,
+                      variant: "destructive",
+                    });
                     return;
                   }
                   handleFileUpload(activity.id, file);
                 }
               }}
-              disabled={progress !== undefined}
+              disabled={progress !== undefined || loading}
             />
           </div>
           {progress !== undefined && (
@@ -255,13 +410,52 @@ export const DayActivities: React.FC = () => {
               placeholder="Enter your response here..."
               rows={4}
               className="mt-1 border border-gray-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
-              onChange={(e) => {
-                if (e.target.value.trim()) {
-                  setTimeout(() => handleTextSubmission(activity.id, e.target.value), 1000);
-                }
-              }}
             />
           </div>
+          <Button
+            onClick={() => {
+              const textarea = document.getElementById(`text-${activity.id}`) as HTMLTextAreaElement;
+              if (textarea?.value.trim()) {
+                handleTextSubmission(activity.id, textarea.value);
+              }
+            }}
+            disabled={loading}
+            className="w-full"
+          >
+            <Send className="h-4 w-4 mr-2" />
+            {loading ? 'Submitting...' : 'Submit Response'}
+          </Button>
+        </div>
+      );
+    }
+
+    if (activity.submissionType === 'link') {
+      return (
+        <div className="mt-4 space-y-4">
+          <div>
+            <Label htmlFor={`link-${activity.id}`} className="text-sm font-medium text-black">
+              Submit Link
+            </Label>
+            <Input
+              id={`link-${activity.id}`}
+              type="url"
+              placeholder="Enter URL here..."
+              className="mt-1 border border-gray-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+            />
+          </div>
+          <Button
+            onClick={() => {
+              const input = document.getElementById(`link-${activity.id}`) as HTMLInputElement;
+              if (input?.value.trim()) {
+                handleLinkSubmission(activity.id, input.value);
+              }
+            }}
+            disabled={loading}
+            className="w-full"
+          >
+            <Send className="h-4 w-4 mr-2" />
+            {loading ? 'Submitting...' : 'Submit Link'}
+          </Button>
         </div>
       );
     }
@@ -320,7 +514,7 @@ export const DayActivities: React.FC = () => {
         ) : (
           visibleActivities.map((activity) => {
             const status = getActivityStatus(activity, currentTime);
-            const submission = submissionData[activity.id];
+            const submitted = isSubmitted(activity.id);
             
             return (
               <Card key={activity.id} className={`border transition-all duration-300 hover:shadow-md ${
@@ -345,6 +539,12 @@ export const DayActivities: React.FC = () => {
                            status === 'completed' ? 'Completed' : 
                            'Upcoming'}
                         </Badge>
+                        {submitted && (
+                          <Badge variant="success" className="bg-green-600 text-white">
+                            <CheckCircle className="h-3 w-3 mr-1" />
+                            Submitted
+                          </Badge>
+                        )}
                       </div>
                       <div className="flex flex-wrap items-center gap-4 text-sm text-gray-600">
                         <div className="flex items-center space-x-1">
@@ -355,9 +555,6 @@ export const DayActivities: React.FC = () => {
                           <div className="flex items-center space-x-1">
                             <FileText className="h-4 w-4" />
                             <span>Submission Required</span>
-                            {submission && (
-                              <CheckCircle className="h-4 w-4 text-green-600" />
-                            )}
                           </div>
                         )}
                       </div>

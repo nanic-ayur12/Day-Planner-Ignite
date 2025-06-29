@@ -14,8 +14,7 @@ import {
   Clock,
   CheckCircle,
   AlertCircle,
-  XCircle,
-  Upload
+  XCircle
 } from 'lucide-react';
 import { collection, getDocs, query, where, orderBy } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
@@ -146,7 +145,6 @@ export const MySubmissions: React.FC = () => {
   const totalSubmissions = submissions.length;
   const submittedCount = submissions.filter(s => s.status === 'submitted').length;
   const pendingCount = submissions.filter(s => s.status === 'pending').length;
-  const lateCount = submissions.filter(s => s.status === 'late').length;
 
   // Get activities that require submission but haven't been submitted
   const submissionRequiredPlans = eventPlans.filter(plan => plan.planType === 'withSubmission');
@@ -158,7 +156,7 @@ export const MySubmissions: React.FC = () => {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold text-gray-900">My Submissions</h1>
+        <h1 className="text-3xl font-bold text-black">My Submissions</h1>
         <div className="relative w-64">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
           <Input
@@ -183,7 +181,7 @@ export const MySubmissions: React.FC = () => {
             <CardTitle className="text-sm font-medium text-gray-600">Total Submissions</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{totalSubmissions}</div>
+            <div className="text-2xl font-bold text-black">{totalSubmissions}</div>
           </CardContent>
         </Card>
         <Card>
@@ -235,7 +233,7 @@ export const MySubmissions: React.FC = () => {
           <Card className="p-8 text-center">
             <CardContent>
               <FileText className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">No Submissions Found</h3>
+              <h3 className="text-lg font-medium text-black mb-2">No Submissions Found</h3>
               <p className="text-gray-600">
                 {searchTerm ? 'No submissions match your search.' : 'You haven\'t made any submissions yet.'}
               </p>
@@ -252,7 +250,7 @@ export const MySubmissions: React.FC = () => {
                         <FileText className="h-4 w-4 text-blue-600" />
                       </div>
                       <div>
-                        <CardTitle className="text-lg">{submission.eventPlanTitle}</CardTitle>
+                        <CardTitle className="text-lg text-black">{submission.eventPlanTitle}</CardTitle>
                         <CardDescription>{submission.eventName}</CardDescription>
                       </div>
                     </div>
@@ -297,9 +295,9 @@ export const MySubmissions: React.FC = () => {
                           View
                         </Button>
                       </DialogTrigger>
-                      <DialogContent className="max-w-2xl">
+                      <DialogContent className="max-w-2xl bg-white">
                         <DialogHeader>
-                          <DialogTitle>{submission.eventPlanTitle}</DialogTitle>
+                          <DialogTitle className="text-black">{submission.eventPlanTitle}</DialogTitle>
                           <DialogDescription>
                             {submission.eventName} • Submitted on {submission.submittedAt.toLocaleDateString()}
                           </DialogDescription>
@@ -307,39 +305,39 @@ export const MySubmissions: React.FC = () => {
                         <div className="space-y-4">
                           <div className="grid grid-cols-2 gap-4 text-sm">
                             <div>
-                              <span className="font-medium">Status:</span>
+                              <span className="font-medium text-black">Status:</span>
                               <Badge className={`ml-2 ${getStatusColor(submission.status)}`}>
                                 {submission.status}
                               </Badge>
                             </div>
                             <div>
-                              <span className="font-medium">Type:</span>
-                              <span className="ml-2">{submission.submissionType}</span>
+                              <span className="font-medium text-black">Type:</span>
+                              <span className="ml-2 text-black">{submission.submissionType}</span>
                             </div>
                             <div>
-                              <span className="font-medium">Submitted:</span>
-                              <span className="ml-2">{submission.submittedAt.toLocaleString()}</span>
+                              <span className="font-medium text-black">Submitted:</span>
+                              <span className="ml-2 text-black">{submission.submittedAt.toLocaleString()}</span>
                             </div>
                             {submission.fileName && (
                               <div>
-                                <span className="font-medium">File:</span>
-                                <span className="ml-2">{submission.fileName}</span>
+                                <span className="font-medium text-black">File:</span>
+                                <span className="ml-2 text-black">{submission.fileName}</span>
                               </div>
                             )}
                           </div>
                           {submission.eventPlan?.description && (
                             <div>
-                              <span className="font-medium">Activity Description:</span>
+                              <span className="font-medium text-black">Activity Description:</span>
                               <div className="mt-2 p-3 bg-gray-50 rounded-lg">
-                                <p className="text-sm">{submission.eventPlan.description}</p>
+                                <p className="text-sm text-black">{submission.eventPlan.description}</p>
                               </div>
                             </div>
                           )}
                           {submission.content && (
                             <div>
-                              <span className="font-medium">Your Response:</span>
+                              <span className="font-medium text-black">Your Response:</span>
                               <div className="mt-2 p-3 bg-blue-50 rounded-lg">
-                                <p className="text-sm">{submission.content}</p>
+                                <p className="text-sm text-black">{submission.content}</p>
                               </div>
                             </div>
                           )}

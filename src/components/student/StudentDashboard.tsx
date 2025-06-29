@@ -3,18 +3,16 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { 
-  BarChart, 
-  Bar, 
-  XAxis, 
-  YAxis, 
-  CartesianGrid, 
-  Tooltip, 
-  ResponsiveContainer,
   PieChart,
   Pie,
   Cell,
   LineChart,
-  Line
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer
 } from 'recharts';
 import { 
   Trophy, 
@@ -36,7 +34,6 @@ export const StudentDashboard: React.FC = () => {
   const [eventPlans, setEventPlans] = useState<EventPlan[]>([]);
   const [events, setEvents] = useState<Event[]>([]);
   const [brigadeStudents, setBrigadeStudents] = useState<User[]>([]);
-  const [loading, setLoading] = useState(false);
   const { userProfile } = useAuth();
 
   useEffect(() => {
@@ -48,7 +45,6 @@ export const StudentDashboard: React.FC = () => {
   const fetchData = async () => {
     if (!userProfile?.id) return;
     
-    setLoading(true);
     try {
       // Fetch user's submissions
       const submissionsQuery = query(
@@ -97,8 +93,6 @@ export const StudentDashboard: React.FC = () => {
       setBrigadeStudents(brigadeStudentsData);
     } catch (error) {
       console.error('Error fetching dashboard data:', error);
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -106,16 +100,14 @@ export const StudentDashboard: React.FC = () => {
   const totalSubmissions = submissions.length;
   const submittedCount = submissions.filter(s => s.status === 'submitted').length;
   const pendingCount = submissions.filter(s => s.status === 'pending').length;
-  const lateCount = submissions.filter(s => s.status === 'late').length;
 
   const submissionRequiredPlans = eventPlans.filter(plan => plan.planType === 'withSubmission');
   const totalRequiredSubmissions = submissionRequiredPlans.length;
   const completionRate = totalRequiredSubmissions > 0 ? (submittedCount / totalRequiredSubmissions) * 100 : 0;
 
   // Brigade comparison
-  const brigadeSubmissions = brigadeStudents.map(student => {
-    // This would need actual submission data for each student
-    // For demo purposes, we'll use mock data
+  const brigadeSubmissions = brigadeStudents.map(() => {
+    // For demo purposes, we'll use mock data since we don't have access to other students' submissions
     return Math.floor(Math.random() * totalRequiredSubmissions);
   });
   const brigadeAverage = brigadeSubmissions.length > 0 ? 
@@ -146,7 +138,6 @@ export const StudentDashboard: React.FC = () => {
   const statusData = [
     { name: 'Completed', value: submittedCount, color: '#10B981' },
     { name: 'Pending', value: pendingCount, color: '#F59E0B' },
-    { name: 'Late', value: lateCount, color: '#EF4444' }
   ].filter(item => item.value > 0);
 
   // Recent activities
@@ -169,7 +160,7 @@ export const StudentDashboard: React.FC = () => {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">My Dashboard</h1>
+          <h1 className="text-3xl font-bold text-black">My Dashboard</h1>
           <p className="text-gray-600">Welcome back, {userProfile?.name}!</p>
         </div>
         <Badge variant="secondary" className="text-sm px-3 py-1">
@@ -185,7 +176,7 @@ export const StudentDashboard: React.FC = () => {
             <Target className="h-4 w-4 text-blue-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{Math.round(completionRate)}%</div>
+            <div className="text-2xl font-bold text-black">{Math.round(completionRate)}%</div>
             <Progress value={completionRate} className="mt-2" />
             <p className="text-xs text-gray-600 mt-1">
               {submittedCount} of {totalRequiredSubmissions} completed
@@ -198,7 +189,7 @@ export const StudentDashboard: React.FC = () => {
             <FileText className="h-4 w-4 text-emerald-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{totalSubmissions}</div>
+            <div className="text-2xl font-bold text-black">{totalSubmissions}</div>
             <p className="text-xs text-green-600 font-medium">
               {submittedCount} successful
             </p>
@@ -210,7 +201,7 @@ export const StudentDashboard: React.FC = () => {
             <Trophy className="h-4 w-4 text-orange-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">#{myRankInBrigade}</div>
+            <div className="text-2xl font-bold text-black">#{myRankInBrigade}</div>
             <p className="text-xs text-gray-600">
               out of {brigadeStudents.length} students
             </p>
@@ -222,7 +213,7 @@ export const StudentDashboard: React.FC = () => {
             <Calendar className="h-4 w-4 text-purple-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
+            <div className="text-2xl font-bold text-black">
               {weeklyData.reduce((sum, day) => sum + day.submissions, 0)}
             </div>
             <p className="text-xs text-gray-600">submissions made</p>
@@ -299,9 +290,9 @@ export const StudentDashboard: React.FC = () => {
                     <div key={index} className="flex items-center justify-between text-sm">
                       <div className="flex items-center space-x-2">
                         <div className={`w-3 h-3 rounded-full`} style={{ backgroundColor: item.color }} />
-                        <span>{item.name}</span>
+                        <span className="text-black">{item.name}</span>
                       </div>
-                      <span className="font-medium">{item.value}</span>
+                      <span className="font-medium text-black">{item.value}</span>
                     </div>
                   ))}
                 </div>
@@ -342,7 +333,7 @@ export const StudentDashboard: React.FC = () => {
                       <FileText className="h-4 w-4" />
                     </div>
                     <div className="flex-1">
-                      <p className="text-sm font-medium">{submission.eventPlanTitle}</p>
+                      <p className="text-sm font-medium text-black">{submission.eventPlanTitle}</p>
                       <p className="text-xs text-gray-600">
                         {submission.eventName} • {submission.submittedAt.toLocaleDateString()}
                       </p>
@@ -380,7 +371,7 @@ export const StudentDashboard: React.FC = () => {
             <div className="space-y-4">
               <div className="flex items-center justify-between p-3 bg-blue-50 rounded-lg">
                 <div>
-                  <p className="text-sm font-medium">Your Submissions</p>
+                  <p className="text-sm font-medium text-black">Your Submissions</p>
                   <p className="text-xs text-gray-600">Total completed</p>
                 </div>
                 <div className="text-right">
@@ -389,7 +380,7 @@ export const StudentDashboard: React.FC = () => {
               </div>
               <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                 <div>
-                  <p className="text-sm font-medium">Brigade Average</p>
+                  <p className="text-sm font-medium text-black">Brigade Average</p>
                   <p className="text-xs text-gray-600">Average submissions</p>
                 </div>
                 <div className="text-right">
@@ -398,7 +389,7 @@ export const StudentDashboard: React.FC = () => {
               </div>
               <div className="flex items-center justify-between p-3 bg-emerald-50 rounded-lg">
                 <div>
-                  <p className="text-sm font-medium">Your Rank</p>
+                  <p className="text-sm font-medium text-black">Your Rank</p>
                   <p className="text-xs text-gray-600">In {userProfile?.brigadeName}</p>
                 </div>
                 <div className="text-right">

@@ -11,12 +11,12 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { LogOut, Activity, Calendar, FileText, BarChart3, Menu, X, Bell } from 'lucide-react';
+import { LogOut, Activity, Calendar, FileText, BarChart3, Menu, X } from 'lucide-react';
 
 const navigationItems = [
-  { icon: Calendar, label: 'Activities', path: '/student', color: 'text-blue-600' },
+  { icon: BarChart3, label: 'Dashboard', path: '/student', color: 'text-purple-600' },
+  { icon: Calendar, label: 'Activities', path: '/student/activities', color: 'text-blue-600' },
   { icon: FileText, label: 'My Submissions', path: '/student/submissions', color: 'text-emerald-600' },
-  { icon: BarChart3, label: 'Dashboard', path: '/student/dashboard', color: 'text-purple-600' },
 ];
 
 export const StudentLayout: React.FC = () => {
@@ -87,11 +87,17 @@ export const StudentLayout: React.FC = () => {
                 {mobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
               </Button>
 
-              {/* Notifications */}
-              <Button variant="ghost" size="sm" className="rounded-lg relative hidden sm:flex">
-                <Bell className="h-5 w-5" />
-                <span className="absolute -top-1 -right-1 h-3 w-3 bg-red-500 rounded-full"></span>
-              </Button>
+              {/* Live Time Display */}
+              <div className="hidden sm:block text-right">
+                <p className="text-sm font-semibold text-black">
+                  {new Date().toLocaleTimeString('en-US', { 
+                    hour: '2-digit', 
+                    minute: '2-digit',
+                    hour12: true 
+                  })}
+                </p>
+                <p className="text-xs text-gray-500">Live Time</p>
+              </div>
 
               {/* User info and menu */}
               <div className="flex items-center space-x-3">
