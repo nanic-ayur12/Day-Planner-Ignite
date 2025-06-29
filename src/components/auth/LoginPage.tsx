@@ -223,14 +223,6 @@ export default function LoginPage() {
 
                     <div className="space-y-3">
                       <Button 
-                        type="button"
-                        variant="outline"
-                        onClick={() => fillDemoCredentials('admin')}
-                        className="w-full h-10 border-gray-200 text-black hover:bg-gray-50 hover:text-black rounded-lg text-sm font-medium"
-                      >
-                        Use Demo Credentials
-                      </Button>
-                      <Button 
                         onClick={handleAdminLogin}
                         className="w-full h-12 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium transition-all duration-200 shadow-lg hover:shadow-xl group"
                         disabled={loading}
