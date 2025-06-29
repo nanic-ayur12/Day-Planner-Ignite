@@ -56,9 +56,18 @@ const getActivityStatus = (activity: EventPlan, currentTime: Date) => {
   return 'completed';
 };
 
+// Helper function to get current date in IST
+const getCurrentDateIST = () => {
+  const now = new Date();
+  // Convert to IST (UTC+5:30)
+  const istOffset = 5.5 * 60 * 60 * 1000; // 5.5 hours in milliseconds
+  const istTime = new Date(now.getTime() + istOffset);
+  return istTime.toISOString().split('T')[0];
+};
+
 export const DayActivities: React.FC = () => {
   const [currentTime, setCurrentTime] = useState(new Date());
-  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
+  const [selectedDate, setSelectedDate] = useState(getCurrentDateIST());
   const [timePhase, setTimePhase] = useState(getTimePhase());
   const [eventPlans, setEventPlans] = useState<EventPlan[]>([]);
   const [submissions, setSubmissions] = useState<Submission[]>([]);
