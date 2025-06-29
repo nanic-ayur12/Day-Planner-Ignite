@@ -264,14 +264,20 @@ export const EventManagement: React.FC = () => {
     return dates;
   };
 
-  // Generate time slots from 9 AM to 5 PM
+  // Generate time slots from 9 AM to 5 PM with 10:45 AM added
   const getTimeSlots = () => {
-    const slots = [];
-    for (let hour = 9; hour <= 17; hour++) {
-      const time12 = hour > 12 ? `${hour - 12}:00 PM` : hour === 12 ? '12:00 PM' : `${hour}:00 AM`;
-      const time24 = `${hour.toString().padStart(2, '0')}:00`;
-      slots.push({ time12, time24, hour });
-    }
+    const slots = [
+      { time12: '9:00 AM', time24: '09:00', hour: 9 },
+      { time12: '10:00 AM', time24: '10:00', hour: 10 },
+      { time12: '10:45 AM', time24: '10:45', hour: 10.75 },
+      { time12: '11:00 AM', time24: '11:00', hour: 11 },
+      { time12: '12:00 PM', time24: '12:00', hour: 12 },
+      { time12: '1:00 PM', time24: '13:00', hour: 13 },
+      { time12: '2:00 PM', time24: '14:00', hour: 14 },
+      { time12: '3:00 PM', time24: '15:00', hour: 15 },
+      { time12: '4:00 PM', time24: '16:00', hour: 16 },
+      { time12: '5:00 PM', time24: '17:00', hour: 17 }
+    ];
     return slots;
   };
 
