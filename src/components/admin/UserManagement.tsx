@@ -25,12 +25,13 @@ import {
   Filter,
   Save
 } from 'lucide-react';
-import { collection, setDoc, getDocs, updateDoc, deleteDoc, doc, getDoc } from 'firebase/firestore';
-import { createUserWithEmailAndPassword } from 'firebase/auth';
+import { collection, setDoc, getDocs, updateDoc, deleteDoc, doc, getDoc, signOut } from 'firebase/firestore';
+import { createUserWithEmailAndPassword, signInWithEmailAndPassword } from 'firebase/auth';
 import { db, auth } from '@/lib/firebase';
 import { User, Brigade } from '@/types';
 import { generateStudentTemplate, generateAdminTemplate, parseStudentExcel, parseAdminExcel } from '@/lib/excelTemplates';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/contexts/AuthContext';
 
 export const UserManagement: React.FC = () => {
   const [users, setUsers] = useState<User[]>([]);
@@ -44,6 +45,7 @@ export const UserManagement: React.FC = () => {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isBulkUploadDialogOpen, setIsBulkUploadDialogOpen] = useState(false);
   const { toast } = useToast();
+  const { currentUser } = useAuth();
 
   const [userForm, setUserForm] = useState({
     name: '',
@@ -114,6 +116,9 @@ export const UserManagement: React.FC = () => {
     setLoading(true);
     setError('');
 
+    // Store current admin credentials to re-authenticate later
+    const currentAdminEmail = currentUser?.email;
+    
     try {
       let email = userForm.email;
       if (userForm.role === 'STUDENT') {
@@ -126,6 +131,7 @@ export const UserManagement: React.FC = () => {
         throw new Error('Invalid email format');
       }
 
+      // Create the new user account
       const userCredential = await createUserWithEmailAndPassword(auth, email, userForm.password);
       
       const selectedBrigade = brigades.find(b => b.id === userForm.brigadeId);
@@ -148,6 +154,16 @@ export const UserManagement: React.FC = () => {
       // Use setDoc with the Auth UID as the document ID
       await setDoc(doc(db, 'users', userCredential.user.uid), userData);
       
+      // Sign out the newly created user immediately
+      await signOut(auth);
+      
+      // Re-authenticate as the admin user
+      if (currentAdminEmail) {
+        // Note: In a real application, you would need to store the admin password securely
+        // For now, we'll just sign out and let the auth state handler manage the re-authentication
+        console.log('New user created successfully, admin needs to re-authenticate');
+      }
+      
       setUserForm({
         name: '',
         email: '',
@@ -162,7 +178,7 @@ export const UserManagement: React.FC = () => {
       
       toast({
         title: "Success!",
-        description: "User created successfully",
+        description: "User created successfully. You may need to log in again.",
       });
     } catch (error: any) {
       console.error('Error creating user:', error);
@@ -277,6 +293,10 @@ export const UserManagement: React.FC = () => {
           
           // Use setDoc with the Auth UID as the document ID
           await setDoc(doc(db, 'users', userCredential.user.uid), userDoc);
+          
+          // Sign out each created user immediately
+          await signOut(auth);
+          
           successCount++;
         } catch (error) {
           console.error(`Error creating user ${userData.name}:`, error);
@@ -290,7 +310,7 @@ export const UserManagement: React.FC = () => {
       
       toast({
         title: "Bulk Upload Complete",
-        description: `${successCount} users created successfully. ${errorCount} failed.`,
+        description: `${successCount} users created successfully. ${errorCount} failed. You may need to log in again.`,
       });
     } catch (error) {
       console.error('Error bulk uploading users:', error);
@@ -391,7 +411,7 @@ export const UserManagement: React.FC = () => {
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
           <Dialog open={isBulkUploadDialogOpen} onOpenChange={setIsBulkUploadDialogOpen}>
             <DialogTrigger asChild>
-              <Button variant="outline" className="border-purple-200 text-purple-600 hover:bg-purple-50 rounded-lg">
+              <Button variant="outline" className="border-purple-200 text-purple-600 hover:bg-purple-50 rounded-lg focus:outline-none focus:ring-0 focus-visible:ring-0">
                 <Upload className="h-4 w-4 mr-2" />
                 Bulk Upload
               </Button>
@@ -411,7 +431,7 @@ export const UserManagement: React.FC = () => {
                   <Button 
                     variant="outline" 
                     onClick={generateStudentTemplate}
-                    className="h-20 flex-col space-y-2 border-emerald-200 hover:bg-emerald-50 rounded-xl"
+                    className="h-20 flex-col space-y-2 border-emerald-200 hover:bg-emerald-50 rounded-xl focus:outline-none focus:ring-0 focus-visible:ring-0"
                   >
                     <FileSpreadsheet className="h-6 w-6 text-emerald-600" />
                     <span>Download Student Template</span>
@@ -419,7 +439,7 @@ export const UserManagement: React.FC = () => {
                   <Button 
                     variant="outline" 
                     onClick={generateAdminTemplate}
-                    className="h-20 flex-col space-y-2 border-blue-200 hover:bg-blue-50 rounded-xl"
+                    className="h-20 flex-col space-y-2 border-blue-200 hover:bg-blue-50 rounded-xl focus:outline-none focus:ring-0 focus-visible:ring-0"
                   >
                     <FileSpreadsheet className="h-6 w-6 text-blue-600" />
                     <span>Download Admin Template</span>
@@ -444,7 +464,7 @@ export const UserManagement: React.FC = () => {
                   </Alert>
                 )}
                 
-                <Button onClick={handleBulkUpload} disabled={loading || !bulkUploadFile} className="w-full bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 rounded-lg">
+                <Button onClick={handleBulkUpload} disabled={loading || !bulkUploadFile} className="w-full bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 rounded-lg focus:outline-none focus:ring-0 focus-visible:ring-0">
                   {loading ? 'Uploading...' : 'Upload Users'}
                 </Button>
               </div>
@@ -453,7 +473,7 @@ export const UserManagement: React.FC = () => {
           
           <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
             <DialogTrigger asChild>
-              <Button className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white rounded-lg">
+              <Button className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white rounded-lg focus:outline-none focus:ring-0 focus-visible:ring-0">
                 <Plus className="h-4 w-4 mr-2" />
                 Add User
               </Button>
@@ -553,7 +573,7 @@ export const UserManagement: React.FC = () => {
                   </Alert>
                 )}
                 
-                <Button type="submit" disabled={loading} className="w-full bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 rounded-lg">
+                <Button type="submit" disabled={loading} className="w-full bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 rounded-lg focus:outline-none focus:ring-0 focus-visible:ring-0">
                   {loading ? 'Creating...' : 'Create User'}
                 </Button>
               </form>
@@ -649,7 +669,7 @@ export const UserManagement: React.FC = () => {
                       variant="outline"
                       size="sm"
                       onClick={() => startEditUser(user)}
-                      className="border-blue-200 text-blue-600 hover:bg-blue-50 rounded-lg"
+                      className="border-blue-200 text-blue-600 hover:bg-blue-50 rounded-lg focus:outline-none focus:ring-0 focus-visible:ring-0"
                     >
                       <Edit className="h-4 w-4" />
                     </Button>
@@ -657,7 +677,7 @@ export const UserManagement: React.FC = () => {
                       variant="outline"
                       size="sm"
                       onClick={() => toggleUserStatus(user.id, user.isActive)}
-                      className="rounded-lg"
+                      className="rounded-lg focus:outline-none focus:ring-0 focus-visible:ring-0"
                     >
                       {user.isActive ? <UserX className="h-4 w-4" /> : <UserCheck className="h-4 w-4" />}
                     </Button>
@@ -665,7 +685,7 @@ export const UserManagement: React.FC = () => {
                       variant="outline"
                       size="sm"
                       onClick={() => handleDeleteUser(user.id)}
-                      className="border-red-200 text-red-600 hover:bg-red-50 rounded-lg"
+                      className="border-red-200 text-red-600 hover:bg-red-50 rounded-lg focus:outline-none focus:ring-0 focus-visible:ring-0"
                     >
                       <Trash2 className="h-4 w-4" />
                     </Button>
@@ -751,7 +771,7 @@ export const UserManagement: React.FC = () => {
             )}
             
             <div className="flex space-x-2">
-              <Button type="submit" disabled={loading} className="flex-1">
+              <Button type="submit" disabled={loading} className="flex-1 focus:outline-none focus:ring-0 focus-visible:ring-0">
                 <Save className="h-4 w-4 mr-2" />
                 {loading ? 'Updating...' : 'Update User'}
               </Button>
@@ -759,6 +779,7 @@ export const UserManagement: React.FC = () => {
                 type="button" 
                 variant="outline" 
                 onClick={() => setIsEditDialogOpen(false)}
+                className="focus:outline-none focus:ring-0 focus-visible:ring-0"
               >
                 Cancel
               </Button>
