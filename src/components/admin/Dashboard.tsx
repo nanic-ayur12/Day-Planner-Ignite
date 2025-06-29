@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { 
   Users, 
   Calendar, 
@@ -9,9 +8,7 @@ import {
   BarChart3,
   Target,
   ArrowUpRight,
-  ArrowDownRight,
-  Plus,
-  Eye
+  ArrowDownRight
 } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area } from 'recharts';
 import { collection, getDocs } from 'firebase/firestore';
@@ -197,9 +194,9 @@ export const AdminDashboard: React.FC = () => {
       {/* Header */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
         <div>
-          <h1 className="text-3xl font-bold text-black">Dashboard Overview</h1>
+          <h1 className="text-3xl font-bold text-black">Overview</h1>
           <p className="text-gray-600 mt-2">
-            Real-time insights into your brigade management system performance.
+            Real-time insights into student performance.
           </p>
         </div>
         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
@@ -212,12 +209,6 @@ export const AdminDashboard: React.FC = () => {
                 hour12: true 
               })} IST
             </span>
-          </div>
-          <div className="flex space-x-2">
-            <Button size="sm" className="bg-blue-600 hover:bg-blue-700">
-              <Plus className="h-4 w-4 mr-2" />
-              Quick Action
-            </Button>
           </div>
         </div>
       </div>
@@ -271,10 +262,6 @@ export const AdminDashboard: React.FC = () => {
                   Events and submissions over the past week
                 </CardDescription>
               </div>
-              <Button variant="outline" size="sm">
-                <Eye className="h-4 w-4 mr-2" />
-                View All
-              </Button>
             </div>
           </CardHeader>
           <CardContent>
@@ -480,6 +467,10 @@ export const AdminDashboard: React.FC = () => {
           </CardContent>
         </Card>
       </div>
-    </div>
+
+      {/* Sidebar Footer */}
+       
+        </div> 
+      
   );
 };

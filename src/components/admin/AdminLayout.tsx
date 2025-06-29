@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -23,9 +23,10 @@ import {
   Activity,
   Shield,
 } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
 
 const sidebarItems = [
-  { icon: Home, label: 'Dashboard', path: '/admin', color: 'text-blue-600' },
+  { icon: Home, label: 'Overview', path: '/admin', color: 'text-blue-600' },
   { icon: Calendar, label: 'Events', path: '/admin/events', color: 'text-green-600' },
   { icon: Users, label: 'User Management', path: '/admin/users', color: 'text-purple-600' },
   { icon: Shield, label: 'Brigade Management', path: '/admin/brigades', color: 'text-orange-600' },
@@ -38,10 +39,24 @@ export const AdminLayout: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const { toast } = useToast();
+
+  // Show login success toast on first load
+  useEffect(() => {
+    const hasShownToast = sessionStorage.getItem('adminLoginToastShown');
+    if (!hasShownToast) {
+      toast({
+        title: "Login Successful!",
+        description: "Welcome to your admin dashboard",
+      });
+      sessionStorage.setItem('adminLoginToastShown', 'true');
+    }
+  }, [toast]);
 
   const handleLogout = async () => {
     try {
       await logout();
+      sessionStorage.removeItem('adminLoginToastShown');
       navigate('/login');
     } catch (error) {
       console.error('Logout error:', error);
@@ -72,7 +87,7 @@ export const AdminLayout: React.FC = () => {
               <Activity className="h-5 w-5 text-blue-600" />
             </div>
             <div>
-              <h1 className="font-bold text-lg text-black">Ignite Planner</h1>
+              <h1 className="font-bold text-lg text-black">Ignite Portal</h1>
               <p className="text-xs text-gray-500">Admin Dashboard</p>
             </div>
           </div>
@@ -80,7 +95,7 @@ export const AdminLayout: React.FC = () => {
             variant="ghost"
             size="sm"
             onClick={() => setSidebarOpen(false)}
-            className="lg:hidden text-gray-500 hover:bg-gray-100"
+            className="lg:hidden text-gray-500 hover:bg-gray-100 focus:outline-none focus:ring-0 focus-visible:ring-0"
           >
             <X className="h-5 w-5" />
           </Button>
@@ -93,7 +108,7 @@ export const AdminLayout: React.FC = () => {
               <Button
                 key={item.path}
                 variant="ghost"
-                className={`w-full justify-start h-11 px-3 rounded-lg transition-all duration-200 ${
+                className={`w-full justify-start h-11 px-3 rounded-lg transition-all duration-200 focus:outline-none focus:ring-0 focus-visible:ring-0 ${
                   location.pathname === item.path 
                     ? 'bg-blue-50 text-blue-700 border border-blue-200' 
                     : 'text-black hover:bg-gray-100 hover:text-black'
@@ -118,8 +133,8 @@ export const AdminLayout: React.FC = () => {
                 <Activity className="h-4 w-4 text-blue-600" />
               </div>
               <div>
-                <p className="text-sm font-semibold text-black">Ignite Day Planner</p>
-                <p className="text-xs text-gray-600">Kumaraguru College</p>
+                <p className="text-sm font-semibold text-black">Ignite Student Portal</p>
+                <p className="text-xs text-gray-600">Kumaraguru Institutions</p>
               </div>
             </div>
           </div>
@@ -135,7 +150,7 @@ export const AdminLayout: React.FC = () => {
               variant="ghost"
               size="sm"
               onClick={() => setSidebarOpen(true)}
-              className="lg:hidden"
+              className="lg:hidden focus:outline-none focus:ring-0 focus-visible:ring-0"
             >
               <Menu className="h-6 w-6" />
             </Button>
@@ -166,7 +181,7 @@ export const AdminLayout: React.FC = () => {
             
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="h-10 w-10 rounded-full">
+                <Button variant="ghost" className="h-10 w-10 rounded-full focus:outline-none focus:ring-0 focus-visible:ring-0">
                   <Avatar className="h-8 w-8">
                     <AvatarFallback className="bg-blue-100 text-blue-600 text-sm font-semibold">
                       {userProfile?.name?.charAt(0)?.toUpperCase() || 'A'}
@@ -181,7 +196,7 @@ export const AdminLayout: React.FC = () => {
                     <p className="text-xs text-gray-600">{userProfile?.email}</p>
                     <div className="flex items-center space-x-2 mt-2">
                       <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                        Administrator
+                        Admin
                       </span>
                     </div>
                   </div>

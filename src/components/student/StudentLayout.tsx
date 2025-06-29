@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -12,6 +12,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { LogOut, Activity, Calendar, FileText, BarChart3, Menu, X } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
 
 const navigationItems = [
   { icon: BarChart3, label: 'Dashboard', path: '/student', color: 'text-purple-600' },
@@ -24,10 +25,24 @@ export const StudentLayout: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const { toast } = useToast();
+
+  // Show login success toast on first load
+  useEffect(() => {
+    const hasShownToast = sessionStorage.getItem('studentLoginToastShown');
+    if (!hasShownToast) {
+      toast({
+        title: "Login Successful!",
+        description: "Welcome to your student dashboard",
+      });
+      sessionStorage.setItem('studentLoginToastShown', 'true');
+    }
+  }, [toast]);
 
   const handleLogout = async () => {
     try {
       await logout();
+      sessionStorage.removeItem('studentLoginToastShown');
       navigate('/login');
     } catch (error) {
       console.error('Logout error:', error);
@@ -63,7 +78,7 @@ export const StudentLayout: React.FC = () => {
                   variant="ghost"
                   size="sm"
                   onClick={() => navigate(item.path)}
-                  className={`flex items-center space-x-2 h-12 px-4 rounded-xl transition-all duration-200 ${
+                  className={`flex items-center space-x-2 h-12 px-4 rounded-xl transition-all duration-200 focus:outline-none focus:ring-0 focus-visible:ring-0 ${
                     location.pathname === item.path 
                       ? 'bg-blue-50 text-blue-700 border border-blue-200' 
                       : 'text-black hover:bg-gray-100 hover:text-black'
@@ -82,7 +97,7 @@ export const StudentLayout: React.FC = () => {
                 variant="ghost"
                 size="sm"
                 onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                className="md:hidden rounded-lg"
+                className="md:hidden rounded-lg focus:outline-none focus:ring-0 focus-visible:ring-0"
               >
                 {mobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
               </Button>
@@ -107,7 +122,7 @@ export const StudentLayout: React.FC = () => {
                 </div>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" className="h-12 w-12 rounded-xl">
+                    <Button variant="ghost" className="h-12 w-12 rounded-xl focus:outline-none focus:ring-0 focus-visible:ring-0">
                       <Avatar className="h-10 w-10">
                         <AvatarFallback className="bg-blue-600 text-white text-sm font-semibold">
                           {userProfile?.name?.charAt(0)?.toUpperCase() || 'S'}
@@ -147,7 +162,7 @@ export const StudentLayout: React.FC = () => {
                   <Button
                     key={item.path}
                     variant="ghost"
-                    className={`w-full justify-start h-12 rounded-xl ${
+                    className={`w-full justify-start h-12 rounded-xl focus:outline-none focus:ring-0 focus-visible:ring-0 ${
                       location.pathname === item.path 
                         ? 'bg-blue-50 text-blue-700 border border-blue-200' 
                         : 'text-black hover:bg-gray-100 hover:text-black'

@@ -25,7 +25,7 @@ import {
   Filter,
   Save
 } from 'lucide-react';
-import { collection, setDoc, getDocs, updateDoc, deleteDoc, doc } from 'firebase/firestore';
+import { collection, setDoc, getDocs, updateDoc, deleteDoc, doc, getDoc } from 'firebase/firestore';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { db, auth } from '@/lib/firebase';
 import { User, Brigade } from '@/types';
@@ -329,7 +329,23 @@ export const UserManagement: React.FC = () => {
 
   const toggleUserStatus = async (userId: string, currentStatus: boolean) => {
     try {
-      await updateDoc(doc(db, 'users', userId), { isActive: !currentStatus });
+      // Check if the document exists before attempting to update
+      const userDocRef = doc(db, 'users', userId);
+      const userDocSnap = await getDoc(userDocRef);
+      
+      if (!userDocSnap.exists()) {
+        console.warn(`User document with ID ${userId} does not exist`);
+        toast({
+          title: "User Not Found",
+          description: "The user you're trying to update was not found. Please refresh the page.",
+          variant: "destructive",
+        });
+        // Refresh the users list to sync with the database
+        fetchUsers();
+        return;
+      }
+
+      await updateDoc(userDocRef, { isActive: !currentStatus });
       fetchUsers();
       toast({
         title: "Success!",

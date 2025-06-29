@@ -33,6 +33,25 @@ body {
   width: 100%;
 }
 
+/* Remove all yellow outlines and focus rings globally */
+*:focus {
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+*:focus-visible {
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+input:focus,
+textarea:focus,
+select:focus,
+button:focus {
+  outline: none !important;
+  box-shadow: none !important;
+}
+
 /* Custom scrollbar */
 ::-webkit-scrollbar {
   width: 8px;
@@ -171,7 +190,7 @@ body {
 
 /* Custom focus styles */
 .focus-ring {
-  @apply focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2;
+  @apply focus:outline-none focus:ring-0 focus-visible:ring-0;
 }
 
 /* Responsive utilities */

@@ -166,21 +166,47 @@ export const Analytics: React.FC = () => {
     { id: 'late', name: 'Late', value: submissions.filter(s => s.status === 'late').length, color: '#EF4444' }
   ].filter(item => item.value > 0);
 
-  // Activity completion data
-  const activityCompletion = eventPlans.slice(0, 10).map((plan, index) => {
-    const planSubmissions = submissions.filter(s => s.eventPlanId === plan.id);
-    const completionRate = totalStudents > 0 ? Math.round((planSubmissions.length / totalStudents) * 100) : 0;
-    
-    return {
-      id: `activity-${plan.id}-${index}`, // Add unique key
-      name: plan.title && plan.title.length > 20 ? plan.title.substring(0, 20) + '...' : plan.title || 'Untitled',
-      completion: completionRate,
-      submissions: planSubmissions.length,
-      total: totalStudents
-    };
-  });
+  // Activity completion data using real event plans
+  const getActivityCompletion = () => {
+    // Filter event plans based on selected event
+    let filteredEventPlans = eventPlans;
+    if (selectedEvent !== 'ALL') {
+      filteredEventPlans = eventPlans.filter(plan => plan.associatedEventId === selectedEvent);
+    }
+
+    // Only include plans that require submission
+    const submissionRequiredPlans = filteredEventPlans.filter(plan => plan.planType === 'withSubmission');
+
+    // Sort by date and take the most recent 10 plans
+    const sortedPlans = submissionRequiredPlans
+      .sort((a, b) => b.date.getTime() - a.date.getTime())
+      .slice(0, 10);
+
+    return sortedPlans.map((plan, index) => {
+      const planSubmissions = submissions.filter(s => s.eventPlanId === plan.id);
+      const submittedSubmissions = planSubmissions.filter(s => s.status === 'submitted');
+      const completionRate = totalStudents > 0 ? Math.round((submittedSubmissions.length / totalStudents) * 100) : 0;
+      
+      // Truncate long titles for better display
+      const displayTitle = plan.title && plan.title.length > 25 ? 
+        plan.title.substring(0, 25) + '...' : 
+        plan.title || 'Untitled Activity';
+      
+      return {
+        id: `activity-${plan.id}-${index}`, // Add unique key
+        name: displayTitle,
+        completion: completionRate,
+        submissions: submittedSubmissions.length,
+        total: totalStudents,
+        fullTitle: plan.title || 'Untitled Activity',
+        date: plan.date.toLocaleDateString(),
+        time: plan.time
+      };
+    });
+  };
 
   const dailyParticipationData = getDailyParticipation();
+  const activityCompletion = getActivityCompletion();
 
   if (isLoading) {
     return (
@@ -437,7 +463,8 @@ export const Analytics: React.FC = () => {
               <span>Activity Completion Rates</span>
             </CardTitle>
             <CardDescription>
-              Completion percentage for each activity
+              Completion percentage for recent activities requiring submission
+              {selectedEvent !== 'ALL' && ` (${events.find(e => e.id === selectedEvent)?.name || 'Selected Event'})`}
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -452,13 +479,31 @@ export const Analytics: React.FC = () => {
                       name === 'completion' ? `${value}%` : value,
                       name === 'completion' ? 'Completion Rate' : 'Submissions'
                     ]}
+                    labelFormatter={(label, payload) => {
+                      if (payload && payload.length > 0) {
+                        const data = payload[0].payload;
+                        return (
+                          <div>
+                            <div className="font-medium">{data.fullTitle}</div>
+                            <div className="text-sm text-gray-600">{data.date} at {data.time}</div>
+                          </div>
+                        );
+                      }
+                      return label;
+                    }}
                   />
                   <Bar dataKey="completion" fill="#F97316" />
                 </BarChart>
               </ResponsiveContainer>
             ) : (
               <div className="flex items-center justify-center h-[250px] text-gray-500">
-                No activity data available
+                <div className="text-center">
+                  <FileText className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                  <p>No activities with submission requirements found</p>
+                  {selectedEvent !== 'ALL' && (
+                    <p className="text-sm mt-2">Try selecting "All Events" to see more data</p>
+                  )}
+                </div>
               </div>
             )}
           </CardContent>
