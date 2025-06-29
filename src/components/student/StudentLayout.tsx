@@ -64,9 +64,9 @@ export const StudentLayout: React.FC = () => {
               </div>
               <div className="hidden sm:block">
                 <h1 className="text-xl font-bold text-black">
-                  Ignite Day Planner
+                  Ignite Portal
                 </h1>
-                <p className="text-xs text-gray-600">Student Portal</p>
+                <p className="text-xs text-gray-600">Student </p>
               </div>
             </div>
 
