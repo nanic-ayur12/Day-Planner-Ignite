@@ -160,7 +160,7 @@ export const Analytics: React.FC = () => {
   // Submission status data
   const submissionStatusData = [
     { name: 'Submitted', value: submissions.filter(s => s.status === 'submitted').length, color: '#10B981' },
-    { name: 'Pending', value: submissions.filter(s => s.status === 'pending').length, color: '#F59E0B' },
+    { name: 'Pending', value: submissions.filter(s => s.status === 'pending').length, color: '#F97316' },
     { name: 'Late', value: submissions.filter(s => s.status === 'late').length, color: '#EF4444' }
   ].filter(item => item.value > 0);
 
