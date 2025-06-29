@@ -473,7 +473,7 @@ export const AdminDashboard: React.FC = () => {
         <div className="bg-gray-50 p-3 rounded-lg border border-gray-200">
           <div className="flex items-center space-x-3">
             <div className="p-2 bg-blue-100 rounded-lg">
-              <className="h-4 w-4 text-blue-600" />
+              <div className="h-4 w-4 text-blue-600" />
             </div>
             <div>
               <p className="text-sm font-semibold text-black"></p>
