@@ -26,7 +26,7 @@ import {
 import { useToast } from '@/hooks/use-toast';
 
 const sidebarItems = [
-  { icon: Home, label: 'Dashboard', path: '/admin', color: 'text-blue-600' },
+  { icon: Home, label: 'Overview', path: '/admin', color: 'text-blue-600' },
   { icon: Calendar, label: 'Events', path: '/admin/events', color: 'text-green-600' },
   { icon: Users, label: 'User Management', path: '/admin/users', color: 'text-purple-600' },
   { icon: Shield, label: 'Brigade Management', path: '/admin/brigades', color: 'text-orange-600' },
