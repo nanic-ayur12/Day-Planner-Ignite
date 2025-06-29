@@ -456,7 +456,7 @@ export const AdminDashboard: React.FC = () => {
                 <div key={index} className="flex items-center justify-between p-4 bg-gray-50 rounded-xl border border-gray-100">
                   <div className="flex items-center space-x-4">
                     <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${
-                      index === 0 ? 'bg-yellow-100 text-yellow-800' :
+                      index === 0 ? 'bg-white text-black border-2 border-gray-300' :
                       index === 1 ? 'bg-gray-100 text-gray-800' :
                       index === 2 ? 'bg-orange-100 text-orange-800' :
                       'bg-blue-100 text-blue-800'

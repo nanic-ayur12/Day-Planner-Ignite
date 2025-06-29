@@ -8,17 +8,18 @@ import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { 
   Calendar, 
   Plus, 
   Edit, 
   Trash2, 
-  Eye,
   Clock,
   Users,
   FileText,
   CheckCircle,
-  AlertCircle
+  AlertCircle,
+  Save
 } from 'lucide-react';
 import { collection, addDoc, getDocs, updateDoc, deleteDoc, doc, query, where } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
@@ -29,12 +30,18 @@ export const EventManagement: React.FC = () => {
   const [events, setEvents] = useState<Event[]>([]);
   const [eventPlans, setEventPlans] = useState<EventPlan[]>([]);
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
+  const [editingEvent, setEditingEvent] = useState<Event | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const { userProfile } = useAuth();
 
   const [eventForm, setEventForm] = useState({
     name: '',
+    startDate: '',
+    endDate: ''
+  });
+
+  const [editForm, setEditForm] = useState({
     startDate: '',
     endDate: ''
   });
@@ -125,6 +132,33 @@ export const EventManagement: React.FC = () => {
     }
   };
 
+  const handleEditEvent = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingEvent || !editForm.startDate || !editForm.endDate) {
+      setError('Please fill in all fields');
+      return;
+    }
+
+    setLoading(true);
+    setError('');
+
+    try {
+      await updateDoc(doc(db, 'events', editingEvent.id), {
+        startDate: new Date(editForm.startDate),
+        endDate: new Date(editForm.endDate)
+      });
+      
+      setEditingEvent(null);
+      setEditForm({ startDate: '', endDate: '' });
+      fetchEvents();
+    } catch (error) {
+      console.error('Error updating event:', error);
+      setError('Failed to update event');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleCreateEventPlan = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedEvent || !planForm.title || !planForm.date || !planForm.time) {
@@ -207,10 +241,56 @@ export const EventManagement: React.FC = () => {
     }
   };
 
+  const startEditEvent = (event: Event) => {
+    setEditingEvent(event);
+    setEditForm({
+      startDate: event.startDate.toISOString().split('T')[0],
+      endDate: event.endDate.toISOString().split('T')[0]
+    });
+  };
+
+  // Generate date range for Kanban view
+  const getDateRange = () => {
+    if (!selectedEvent) return [];
+    
+    const dates = [];
+    const start = new Date(selectedEvent.startDate);
+    const end = new Date(selectedEvent.endDate);
+    
+    for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+      dates.push(new Date(d));
+    }
+    
+    return dates;
+  };
+
+  // Generate time slots from 9 AM to 5 PM
+  const getTimeSlots = () => {
+    const slots = [];
+    for (let hour = 9; hour <= 17; hour++) {
+      const time12 = hour > 12 ? `${hour - 12}:00 PM` : hour === 12 ? '12:00 PM' : `${hour}:00 AM`;
+      const time24 = `${hour.toString().padStart(2, '0')}:00`;
+      slots.push({ time12, time24, hour });
+    }
+    return slots;
+  };
+
+  // Get plans for specific date and time
+  const getPlansForDateTime = (date: Date, timeSlot: string) => {
+    return eventPlans.filter(plan => {
+      const planDate = plan.date.toISOString().split('T')[0];
+      const targetDate = date.toISOString().split('T')[0];
+      return planDate === targetDate && plan.time === timeSlot;
+    });
+  };
+
+  const dateRange = getDateRange();
+  const timeSlots = getTimeSlots();
+
   return (
     <div className="space-y-6 w-full max-w-7xl mx-auto">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <h1 className="text-3xl font-bold text-gray-900">Event Management</h1>
+        <h1 className="text-3xl font-bold text-black">Event Management</h1>
         <Dialog>
           <DialogTrigger asChild>
             <Button className="bg-blue-600 hover:bg-blue-700">
@@ -284,7 +364,7 @@ export const EventManagement: React.FC = () => {
               <Card className="p-8 text-center">
                 <CardContent>
                   <Calendar className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                  <h3 className="text-lg font-medium text-gray-900 mb-2">No Events Created</h3>
+                  <h3 className="text-lg font-medium text-black mb-2">No Events Created</h3>
                   <p className="text-gray-600">Create your first event to get started.</p>
                 </CardContent>
               </Card>
@@ -294,7 +374,7 @@ export const EventManagement: React.FC = () => {
                   <CardHeader>
                     <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
                       <div className="space-y-2">
-                        <CardTitle className="text-xl">{event.name}</CardTitle>
+                        <CardTitle className="text-xl text-black">{event.name}</CardTitle>
                         <CardDescription>
                           <div className="flex flex-wrap items-center gap-4 text-sm">
                             <span className="flex items-center space-x-1">
@@ -313,8 +393,16 @@ export const EventManagement: React.FC = () => {
                           size="sm"
                           onClick={() => setSelectedEvent(event)}
                         >
-                          <Eye className="h-4 w-4 mr-2" />
-                          View Plans
+                          <FileText className="h-4 w-4 mr-2" />
+                          Manage Plans
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => startEditEvent(event)}
+                          className="border-blue-200 text-blue-600 hover:bg-blue-50"
+                        >
+                          <Edit className="h-4 w-4" />
                         </Button>
                         <Button
                           variant="outline"
@@ -337,12 +425,15 @@ export const EventManagement: React.FC = () => {
           {selectedEvent && (
             <>
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                <h2 className="text-xl font-semibold">Plans for {selectedEvent.name}</h2>
+                <div>
+                  <h2 className="text-xl font-semibold text-black">Plans for {selectedEvent.name}</h2>
+                  <p className="text-gray-600">Kanban view: Dates as columns, Times as rows</p>
+                </div>
                 <Dialog>
                   <DialogTrigger asChild>
                     <Button className="bg-green-600 hover:bg-green-700">
                       <Plus className="h-4 w-4 mr-2" />
-                      Create Plan
+                      Add Task
                     </Button>
                   </DialogTrigger>
                   <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
@@ -380,25 +471,35 @@ export const EventManagement: React.FC = () => {
                             type="date"
                             value={planForm.date}
                             onChange={(e) => setPlanForm(prev => ({ ...prev, date: e.target.value }))}
+                            min={selectedEvent.startDate.toISOString().split('T')[0]}
+                            max={selectedEvent.endDate.toISOString().split('T')[0]}
                           />
                         </div>
                         <div className="space-y-2">
                           <Label htmlFor="planTime">Start Time</Label>
-                          <Input
-                            id="planTime"
-                            type="time"
-                            value={planForm.time}
-                            onChange={(e) => setPlanForm(prev => ({ ...prev, time: e.target.value }))}
-                          />
+                          <Select value={planForm.time} onValueChange={(value) => setPlanForm(prev => ({ ...prev, time: value }))}>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select time" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {timeSlots.map(slot => (
+                                <SelectItem key={slot.time24} value={slot.time12}>{slot.time12}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
                         </div>
                         <div className="space-y-2">
                           <Label htmlFor="planEndTime">End Time</Label>
-                          <Input
-                            id="planEndTime"
-                            type="time"
-                            value={planForm.endTime}
-                            onChange={(e) => setPlanForm(prev => ({ ...prev, endTime: e.target.value }))}
-                          />
+                          <Select value={planForm.endTime} onValueChange={(value) => setPlanForm(prev => ({ ...prev, endTime: value }))}>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select end time" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {timeSlots.map(slot => (
+                                <SelectItem key={slot.time24} value={slot.time12}>{slot.time12}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
                         </div>
                       </div>
                       <div className="space-y-4">
@@ -483,61 +584,112 @@ export const EventManagement: React.FC = () => {
                 </Dialog>
               </div>
 
-              <div className="grid gap-4">
-                {eventPlans.length === 0 ? (
-                  <Card className="p-8 text-center">
-                    <CardContent>
-                      <FileText className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                      <h3 className="text-lg font-medium text-gray-900 mb-2">No Plans Created</h3>
-                      <p className="text-gray-600">Create your first event plan to get started.</p>
-                    </CardContent>
-                  </Card>
-                ) : (
-                  eventPlans.map((plan) => (
-                    <Card key={plan.id} className="hover:shadow-md transition-shadow border">
-                      <CardHeader>
-                        <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
-                          <div className="space-y-2">
-                            <CardTitle className="text-lg">{plan.title}</CardTitle>
-                            <CardDescription>{plan.description}</CardDescription>
-                            <div className="flex flex-wrap items-center gap-4 text-sm text-gray-600">
-                              <span className="flex items-center space-x-1">
-                                <Calendar className="h-4 w-4" />
-                                <span>{plan.date.toLocaleDateString()}</span>
-                              </span>
-                              <span className="flex items-center space-x-1">
-                                <Clock className="h-4 w-4" />
-                                <span>{plan.time} - {plan.endTime}</span>
-                              </span>
-                              <Badge variant={plan.planType === 'withSubmission' ? 'default' : 'secondary'}>
-                                {plan.planType === 'withSubmission' ? 'With Submission' : 'No Submission'}
-                              </Badge>
-                              {plan.planType === 'withSubmission' && (
-                                <Badge variant="outline">
-                                  {plan.submissionType}
-                                  {plan.submissionType === 'file' && ` (${plan.fileSizeLimit}MB)`}
-                                </Badge>
-                              )}
-                            </div>
-                          </div>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleDeleteEventPlan(plan.id)}
-                            className="border-red-200 text-red-600 hover:bg-red-50"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
+              {/* Kanban Board */}
+              <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+                <div className="overflow-x-auto">
+                  <div className="min-w-max">
+                    {/* Header with dates */}
+                    <div className="grid grid-cols-[120px_repeat(auto-fit,_200px)] gap-1 bg-gray-50 p-2">
+                      <div className="font-semibold text-black p-3 text-center">Time</div>
+                      {dateRange.map((date, index) => (
+                        <div key={index} className="font-semibold text-black p-3 text-center border-l border-gray-200">
+                          <div>{date.toLocaleDateString('en-US', { weekday: 'short' })}</div>
+                          <div className="text-sm text-gray-600">{date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</div>
                         </div>
-                      </CardHeader>
-                    </Card>
-                  ))
-                )}
+                      ))}
+                    </div>
+
+                    {/* Time slots with plans */}
+                    {timeSlots.map((timeSlot) => (
+                      <div key={timeSlot.time24} className="grid grid-cols-[120px_repeat(auto-fit,_200px)] gap-1 border-t border-gray-200">
+                        <div className="p-3 bg-gray-50 font-medium text-black text-center border-r border-gray-200">
+                          {timeSlot.time12}
+                        </div>
+                        {dateRange.map((date, dateIndex) => {
+                          const plans = getPlansForDateTime(date, timeSlot.time12);
+                          return (
+                            <div key={dateIndex} className="p-2 min-h-[80px] border-l border-gray-200 bg-white">
+                              {plans.map((plan) => (
+                                <div
+                                  key={plan.id}
+                                  className="mb-2 p-2 bg-blue-50 border border-blue-200 rounded-md hover:shadow-sm transition-shadow cursor-pointer group"
+                                >
+                                  <div className="flex items-start justify-between">
+                                    <div className="flex-1 min-w-0">
+                                      <h4 className="text-sm font-medium text-black truncate">{plan.title}</h4>
+                                      <p className="text-xs text-gray-600 mt-1">{plan.time} - {plan.endTime}</p>
+                                      <div className="flex items-center space-x-1 mt-1">
+                                        <Badge variant={plan.planType === 'withSubmission' ? 'default' : 'secondary'} className="text-xs">
+                                          {plan.planType === 'withSubmission' ? 'Submission' : 'Activity'}
+                                        </Badge>
+                                      </div>
+                                    </div>
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      onClick={() => handleDeleteEventPlan(plan.id)}
+                                      className="opacity-0 group-hover:opacity-100 transition-opacity p-1 h-auto text-red-600 hover:bg-red-50"
+                                    >
+                                      <Trash2 className="h-3 w-3" />
+                                    </Button>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    ))}
+                  </div>
+                </div>
               </div>
             </>
           )}
         </TabsContent>
       </Tabs>
+
+      {/* Edit Event Dialog */}
+      <Dialog open={!!editingEvent} onOpenChange={() => setEditingEvent(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit Event Dates</DialogTitle>
+            <DialogDescription>
+              Update the start and end dates for {editingEvent?.name}
+            </DialogDescription>
+          </DialogHeader>
+          <form onSubmit={handleEditEvent} className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="editStartDate">Start Date</Label>
+                <Input
+                  id="editStartDate"
+                  type="date"
+                  value={editForm.startDate}
+                  onChange={(e) => setEditForm(prev => ({ ...prev, startDate: e.target.value }))}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="editEndDate">End Date</Label>
+                <Input
+                  id="editEndDate"
+                  type="date"
+                  value={editForm.endDate}
+                  onChange={(e) => setEditForm(prev => ({ ...prev, endDate: e.target.value }))}
+                />
+              </div>
+            </div>
+            <div className="flex space-x-2">
+              <Button type="submit" disabled={loading} className="flex-1">
+                <Save className="h-4 w-4 mr-2" />
+                {loading ? 'Saving...' : 'Save Changes'}
+              </Button>
+              <Button type="button" variant="outline" onClick={() => setEditingEvent(null)}>
+                Cancel
+              </Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
