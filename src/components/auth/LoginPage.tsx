@@ -100,13 +100,13 @@ export default function LoginPage() {
               </div>
             </div>
             <div>
-              <h1 className="text-3xl font-bold text-black">Ignite Planner</h1>
-              <p className="text-blue-600 font-medium">Kumaraguru College</p>
+              <h1 className="text-3xl font-bold text-black">Student Ignite Portal</h1>
+              <p className="text-blue-600 font-medium">Kumaraguru Institutions</p>
             </div>
           </div>
 
           <div className="text-center space-y-2">
-            <h2 className="text-3xl font-bold text-black">Welcome Back</h2>
+            <h2 className="text-3xl font-bold text-black">Welcome !! </h2>
             <p className="text-gray-600">Please sign in to your account</p>
           </div>
 
