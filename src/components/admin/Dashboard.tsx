@@ -1,26 +1,20 @@
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { 
   Users, 
   Calendar, 
   FileText, 
-  TrendingUp,
   Activity,
-  CheckCircle,
-  Clock,
-  AlertCircle,
   BarChart3,
   Target,
   ArrowUpRight,
   ArrowDownRight,
   Plus,
-  Eye,
-  TrendingDown
+  Eye
 } from 'lucide-react';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, PieChart, Pie, Cell, AreaChart, Area } from 'recharts';
-import { collection, getDocs, query, where } from 'firebase/firestore';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area } from 'recharts';
+import { collection, getDocs } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { User, Submission, EventPlan, Event, Brigade } from '@/types';
 
@@ -31,7 +25,6 @@ export const AdminDashboard: React.FC = () => {
   const [eventPlans, setEventPlans] = useState<EventPlan[]>([]);
   const [events, setEvents] = useState<Event[]>([]);
   const [brigades, setBrigades] = useState<Brigade[]>([]);
-  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     const timer = setInterval(() => setCurrentTime(new Date()), 1000);
@@ -43,7 +36,6 @@ export const AdminDashboard: React.FC = () => {
   }, []);
 
   const fetchLiveData = async () => {
-    setLoading(true);
     try {
       const [usersSnapshot, submissionsSnapshot, eventPlansSnapshot, eventsSnapshot, brigadesSnapshot] = await Promise.all([
         getDocs(collection(db, 'users')),
@@ -93,8 +85,6 @@ export const AdminDashboard: React.FC = () => {
       setBrigades(brigadesData);
     } catch (error) {
       console.error('Error fetching live data:', error);
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -207,7 +197,7 @@ export const AdminDashboard: React.FC = () => {
       {/* Header */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Dashboard Overview</h1>
+          <h1 className="text-3xl font-bold text-black">Dashboard Overview</h1>
           <p className="text-gray-600 mt-2">
             Real-time insights into your brigade management system performance.
           </p>
@@ -242,7 +232,7 @@ export const AdminDashboard: React.FC = () => {
                   {stat.title}
                 </CardTitle>
                 <div className="flex items-center space-x-2">
-                  <span className="text-2xl font-bold text-gray-900">{stat.value}</span>
+                  <span className="text-2xl font-bold text-black">{stat.value}</span>
                   <div className={`flex items-center text-xs font-medium ${
                     stat.trend === 'up' ? 'text-green-600' : 
                     stat.trend === 'down' ? 'text-red-600' : 'text-gray-500'
@@ -273,7 +263,7 @@ export const AdminDashboard: React.FC = () => {
           <CardHeader>
             <div className="flex items-center justify-between">
               <div>
-                <CardTitle className="flex items-center space-x-2 text-gray-900">
+                <CardTitle className="flex items-center space-x-2 text-black">
                   <BarChart3 className="h-5 w-5 text-purple-600" />
                   <span>Weekly Activity</span>
                 </CardTitle>
@@ -336,7 +326,7 @@ export const AdminDashboard: React.FC = () => {
         {/* Brigade Performance Comparison */}
         <Card className="border shadow-sm">
           <CardHeader>
-            <CardTitle className="flex items-center space-x-2 text-gray-900">
+            <CardTitle className="flex items-center space-x-2 text-black">
               <Users className="h-5 w-5 text-green-600" />
               <span>Brigade Performance</span>
             </CardTitle>
@@ -386,7 +376,7 @@ export const AdminDashboard: React.FC = () => {
         {/* System Performance */}
         <Card className="border shadow-sm">
           <CardHeader>
-            <CardTitle className="flex items-center space-x-2 text-gray-900">
+            <CardTitle className="flex items-center space-x-2 text-black">
               <Activity className="h-5 w-5 text-blue-600" />
               <span>System Performance</span>
             </CardTitle>
@@ -450,7 +440,7 @@ export const AdminDashboard: React.FC = () => {
         {/* Brigade Comparison Details */}
         <Card className="border shadow-sm">
           <CardHeader>
-            <CardTitle className="flex items-center space-x-2 text-gray-900">
+            <CardTitle className="flex items-center space-x-2 text-black">
               <Target className="h-5 w-5 text-orange-600" />
               <span>Brigade Rankings</span>
             </CardTitle>
@@ -474,14 +464,14 @@ export const AdminDashboard: React.FC = () => {
                       {index + 1}
                     </div>
                     <div>
-                      <h3 className="font-semibold text-gray-900">{brigade.name}</h3>
+                      <h3 className="font-semibold text-black">{brigade.name}</h3>
                       <p className="text-sm text-gray-600">
                         {brigade.students} students • {brigade.submissions} submissions
                       </p>
                     </div>
                   </div>
                   <div className="text-right">
-                    <div className="text-lg font-bold text-gray-900">{brigade.participationRate}%</div>
+                    <div className="text-lg font-bold text-black">{brigade.participationRate}%</div>
                     <div className="text-xs text-gray-600">Participation</div>
                   </div>
                 </div>

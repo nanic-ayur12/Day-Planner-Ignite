@@ -36,7 +36,6 @@ export const Analytics: React.FC = () => {
   const [eventPlans, setEventPlans] = useState<EventPlan[]>([]);
   const [events, setEvents] = useState<Event[]>([]);
   const [brigades, setBrigades] = useState<Brigade[]>([]);
-  const [loading, setLoading] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<string>('ALL');
   const [selectedTimeRange, setSelectedTimeRange] = useState<string>('7');
 
@@ -45,7 +44,6 @@ export const Analytics: React.FC = () => {
   }, []);
 
   const fetchData = async () => {
-    setLoading(true);
     try {
       const [usersSnapshot, submissionsSnapshot, eventPlansSnapshot, eventsSnapshot, brigadesSnapshot] = await Promise.all([
         getDocs(collection(db, 'users')),
@@ -95,8 +93,6 @@ export const Analytics: React.FC = () => {
       setBrigades(brigadesData);
     } catch (error) {
       console.error('Error fetching analytics data:', error);
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -184,7 +180,7 @@ export const Analytics: React.FC = () => {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold text-gray-900">Analytics Dashboard</h1>
+        <h1 className="text-3xl font-bold text-black">Analytics Dashboard</h1>
         <div className="flex items-center space-x-4">
           <Select value={selectedEvent} onValueChange={setSelectedEvent}>
             <SelectTrigger className="w-48">
@@ -218,7 +214,7 @@ export const Analytics: React.FC = () => {
             <Users className="h-4 w-4 text-blue-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{totalStudents}</div>
+            <div className="text-2xl font-bold text-black">{totalStudents}</div>
             <p className="text-xs text-green-600 font-medium">
               {activeStudents} active
             </p>
@@ -230,7 +226,7 @@ export const Analytics: React.FC = () => {
             <FileText className="h-4 w-4 text-emerald-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{totalSubmissions}</div>
+            <div className="text-2xl font-bold text-black">{totalSubmissions}</div>
             <p className="text-xs text-green-600 font-medium">
               {submittedCount} completed
             </p>
@@ -242,7 +238,7 @@ export const Analytics: React.FC = () => {
             <TrendingUp className="h-4 w-4 text-orange-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{Math.round(participationRate)}%</div>
+            <div className="text-2xl font-bold text-black">{Math.round(participationRate)}%</div>
             <p className="text-xs text-gray-600">
               Overall engagement
             </p>
@@ -254,7 +250,7 @@ export const Analytics: React.FC = () => {
             <Calendar className="h-4 w-4 text-purple-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{events.filter(e => e.isActive).length}</div>
+            <div className="text-2xl font-bold text-black">{events.filter(e => e.isActive).length}</div>
             <p className="text-xs text-gray-600">
               {eventPlans.length} total activities
             </p>
@@ -424,7 +420,7 @@ export const Analytics: React.FC = () => {
                     <Users className="h-4 w-4 text-blue-600" />
                   </div>
                   <div>
-                    <h3 className="font-medium">{brigade.name}</h3>
+                    <h3 className="font-medium text-black">{brigade.name}</h3>
                     <p className="text-sm text-gray-600">
                       {brigade.students} students • {brigade.submissions} submissions
                     </p>
@@ -432,7 +428,7 @@ export const Analytics: React.FC = () => {
                 </div>
                 <div className="flex items-center space-x-4">
                   <div className="text-right">
-                    <div className="text-lg font-bold">{brigade.participationRate}%</div>
+                    <div className="text-lg font-bold text-black">{brigade.participationRate}%</div>
                     <div className="text-xs text-gray-600">Participation</div>
                   </div>
                   <Badge 
