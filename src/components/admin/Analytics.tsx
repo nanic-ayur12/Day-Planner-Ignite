@@ -113,7 +113,7 @@ export const Analytics: React.FC = () => {
   const participationRate = totalStudents > 0 ? Math.round((submittedCount / totalStudents) * 100) : 0;
 
   // Brigade performance data with safe calculations
-  const brigadePerformance = brigades.map(brigade => {
+  const brigadePerformance = brigades.map((brigade, index) => {
     const brigadeStudents = students.filter(s => s.brigadeId === brigade.id);
     const brigadeSubmissions = submissions.filter(s => 
       brigadeStudents.some(student => student.id === s.studentId)
@@ -123,6 +123,7 @@ export const Analytics: React.FC = () => {
       Math.round((brigadeSubmittedCount / brigadeStudents.length) * 100) : 0;
 
     return {
+      id: `${brigade.id}-${index}`, // Add unique key
       name: brigade.name || 'Unknown Brigade',
       students: brigadeStudents.length,
       submissions: brigadeSubmittedCount,
@@ -148,6 +149,7 @@ export const Analytics: React.FC = () => {
         Math.round((daySubmissions.length / totalStudents) * 100) : 0;
       
       data.push({
+        id: `day-${i}`, // Add unique key
         date: date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
         submissions: daySubmissions.length,
         participation: participationValue
@@ -159,17 +161,18 @@ export const Analytics: React.FC = () => {
 
   // Submission status data
   const submissionStatusData = [
-    { name: 'Submitted', value: submissions.filter(s => s.status === 'submitted').length, color: '#10B981' },
-    { name: 'Pending', value: submissions.filter(s => s.status === 'pending').length, color: '#F97316' },
-    { name: 'Late', value: submissions.filter(s => s.status === 'late').length, color: '#EF4444' }
+    { id: 'submitted', name: 'Submitted', value: submissions.filter(s => s.status === 'submitted').length, color: '#10B981' },
+    { id: 'pending', name: 'Pending', value: submissions.filter(s => s.status === 'pending').length, color: '#F97316' },
+    { id: 'late', name: 'Late', value: submissions.filter(s => s.status === 'late').length, color: '#EF4444' }
   ].filter(item => item.value > 0);
 
   // Activity completion data
-  const activityCompletion = eventPlans.slice(0, 10).map(plan => {
+  const activityCompletion = eventPlans.slice(0, 10).map((plan, index) => {
     const planSubmissions = submissions.filter(s => s.eventPlanId === plan.id);
     const completionRate = totalStudents > 0 ? Math.round((planSubmissions.length / totalStudents) * 100) : 0;
     
     return {
+      id: `activity-${plan.id}-${index}`, // Add unique key
       name: plan.title && plan.title.length > 20 ? plan.title.substring(0, 20) + '...' : plan.title || 'Untitled',
       completion: completionRate,
       submissions: planSubmissions.length,
@@ -400,15 +403,15 @@ export const Analytics: React.FC = () => {
                       dataKey="value"
                     >
                       {submissionStatusData.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={entry.color} />
+                        <Cell key={entry.id} fill={entry.color} />
                       ))}
                     </Pie>
                     <Tooltip formatter={(value) => [`${value}`, 'Count']} />
                   </PieChart>
                 </ResponsiveContainer>
                 <div className="mt-4 space-y-2">
-                  {submissionStatusData.map((item, index) => (
-                    <div key={index} className="flex items-center justify-between text-sm">
+                  {submissionStatusData.map((item) => (
+                    <div key={item.id} className="flex items-center justify-between text-sm">
                       <div className="flex items-center space-x-2">
                         <div className={`w-3 h-3 rounded-full`} style={{ backgroundColor: item.color }} />
                         <span>{item.name}</span>
@@ -473,8 +476,8 @@ export const Analytics: React.FC = () => {
         <CardContent>
           {brigadePerformance.length > 0 ? (
             <div className="grid gap-4">
-              {brigadePerformance.map((brigade, index) => (
-                <div key={index} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+              {brigadePerformance.map((brigade) => (
+                <div key={brigade.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
                   <div className="flex items-center space-x-4">
                     <div className="p-2 bg-blue-100 rounded-full">
                       <Users className="h-4 w-4 text-blue-600" />

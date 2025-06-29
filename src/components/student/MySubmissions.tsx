@@ -114,7 +114,7 @@ export const MySubmissions: React.FC = () => {
       case 'submitted':
         return <CheckCircle className="h-4 w-4 text-green-600" />;
       case 'pending':
-        return <Clock className="h-4 w-4 text-yellow-600" />;
+        return <Clock className="h-4 w-4 text-orange-600" />;
       case 'late':
         return <AlertCircle className="h-4 w-4 text-red-600" />;
       default:
@@ -127,7 +127,7 @@ export const MySubmissions: React.FC = () => {
       case 'submitted':
         return 'bg-green-100 text-green-800';
       case 'pending':
-        return 'bg-yellow-100 text-yellow-800';
+        return 'bg-orange-100 text-orange-800';
       case 'late':
         return 'bg-red-100 text-red-800';
       default:
@@ -197,7 +197,7 @@ export const MySubmissions: React.FC = () => {
             <CardTitle className="text-sm font-medium text-gray-600">Pending</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-yellow-600">{pendingCount}</div>
+            <div className="text-2xl font-bold text-orange-600">{pendingCount}</div>
           </CardContent>
         </Card>
         <Card>

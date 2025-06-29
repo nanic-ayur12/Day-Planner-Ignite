@@ -21,12 +21,14 @@ import {
   Home,
   Upload,
   Activity,
+  Shield,
 } from 'lucide-react';
 
 const sidebarItems = [
   { icon: Home, label: 'Dashboard', path: '/admin', color: 'text-blue-600' },
   { icon: Calendar, label: 'Events', path: '/admin/events', color: 'text-green-600' },
   { icon: Users, label: 'User Management', path: '/admin/users', color: 'text-purple-600' },
+  { icon: Shield, label: 'Brigade Management', path: '/admin/brigades', color: 'text-orange-600' },
   { icon: Upload, label: 'Submissions', path: '/admin/submissions', color: 'text-red-600' },
   { icon: BarChart3, label: 'Analytics', path: '/admin/analytics', color: 'text-indigo-600' },
 ];

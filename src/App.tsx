@@ -6,6 +6,7 @@ import { AdminLayout } from '@/components/admin/AdminLayout';
 import { AdminDashboard } from '@/components/admin/Dashboard';
 import { EventManagement } from '@/components/admin/EventManagement';
 import { UserManagement } from '@/components/admin/UserManagement';
+import { BrigadeManagement } from '@/components/admin/BrigadeManagement';
 import { SubmissionManagement } from '@/components/admin/SubmissionManagement';
 import { Analytics } from '@/components/admin/Analytics';
 import { StudentLayout } from '@/components/student/StudentLayout';
@@ -31,6 +32,7 @@ function App() {
               <Route index element={<AdminDashboard />} />
               <Route path="events" element={<EventManagement />} />
               <Route path="users" element={<UserManagement />} />
+              <Route path="brigades" element={<BrigadeManagement />} />
               <Route path="submissions" element={<SubmissionManagement />} />
               <Route path="analytics" element={<Analytics />} />
             </Route>

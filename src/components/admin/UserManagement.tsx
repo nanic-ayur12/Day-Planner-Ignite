@@ -21,16 +21,16 @@ import {
   Shield,
   GraduationCap,
   FileSpreadsheet,
-  CheckCircle,
   AlertCircle,
   Filter,
-  MoreVertical
+  Save
 } from 'lucide-react';
-import { collection, addDoc, getDocs, updateDoc, deleteDoc, doc, query, where } from 'firebase/firestore';
+import { collection, addDoc, getDocs, updateDoc, deleteDoc, doc } from 'firebase/firestore';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { db, auth } from '@/lib/firebase';
 import { User, Brigade } from '@/types';
 import { generateStudentTemplate, generateAdminTemplate, parseStudentExcel, parseAdminExcel } from '@/lib/excelTemplates';
+import { useToast } from '@/hooks/use-toast';
 
 export const UserManagement: React.FC = () => {
   const [users, setUsers] = useState<User[]>([]);
@@ -39,6 +39,11 @@ export const UserManagement: React.FC = () => {
   const [error, setError] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedRole, setSelectedRole] = useState<'ALL' | 'ADMIN' | 'STUDENT'>('ALL');
+  const [editingUser, setEditingUser] = useState<User | null>(null);
+  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [isBulkUploadDialogOpen, setIsBulkUploadDialogOpen] = useState(false);
+  const { toast } = useToast();
 
   const [userForm, setUserForm] = useState({
     name: '',
@@ -47,6 +52,13 @@ export const UserManagement: React.FC = () => {
     role: 'STUDENT' as 'ADMIN' | 'STUDENT',
     brigadeId: '',
     password: ''
+  });
+
+  const [editForm, setEditForm] = useState({
+    name: '',
+    email: '',
+    rollNumber: '',
+    brigadeId: ''
   });
 
   const [bulkUploadFile, setBulkUploadFile] = useState<File | null>(null);
@@ -68,6 +80,11 @@ export const UserManagement: React.FC = () => {
     } catch (error) {
       console.error('Error fetching users:', error);
       setError('Failed to fetch users');
+      toast({
+        title: "Error",
+        description: "Failed to fetch users",
+        variant: "destructive",
+      });
     }
   };
 
@@ -98,9 +115,16 @@ export const UserManagement: React.FC = () => {
     setError('');
 
     try {
-      const email = userForm.role === 'ADMIN' 
-        ? userForm.email 
-        : `${userForm.rollNumber}@student.ignite.edu`;
+      let email = userForm.email;
+      if (userForm.role === 'STUDENT') {
+        email = `${userForm.rollNumber}@student.ignite.edu`;
+      }
+
+      // Validate email format
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(email)) {
+        throw new Error('Invalid email format');
+      }
 
       const userCredential = await createUserWithEmailAndPassword(auth, email, userForm.password);
       
@@ -111,7 +135,9 @@ export const UserManagement: React.FC = () => {
         role: userForm.role,
         createdAt: new Date(),
         isActive: true,
-        ...(userForm.role === 'ADMIN' ? { email: userForm.email } : {
+        ...(userForm.role === 'ADMIN' ? { 
+          email: userForm.email 
+        } : {
           email: email,
           rollNumber: userForm.rollNumber,
           brigadeId: userForm.brigadeId,
@@ -130,10 +156,70 @@ export const UserManagement: React.FC = () => {
         password: ''
       });
       
+      setIsCreateDialogOpen(false);
       fetchUsers();
-    } catch (error) {
+      
+      toast({
+        title: "Success!",
+        description: "User created successfully",
+      });
+    } catch (error: any) {
       console.error('Error creating user:', error);
-      setError('Failed to create user');
+      setError(error.message || 'Failed to create user');
+      toast({
+        title: "Error",
+        description: error.message || "Failed to create user",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleEditUser = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingUser || !editForm.name) {
+      setError('Please fill in all required fields');
+      return;
+    }
+
+    setLoading(true);
+    setError('');
+
+    try {
+      const selectedBrigade = brigades.find(b => b.id === editForm.brigadeId);
+      
+      const updateData: any = {
+        name: editForm.name,
+      };
+
+      if (editingUser.role === 'ADMIN') {
+        updateData.email = editForm.email;
+      } else {
+        updateData.rollNumber = editForm.rollNumber;
+        updateData.brigadeId = editForm.brigadeId;
+        updateData.brigadeName = selectedBrigade?.name;
+      }
+
+      await updateDoc(doc(db, 'users', editingUser.id), updateData);
+      
+      setEditingUser(null);
+      setEditForm({ name: '', email: '', rollNumber: '', brigadeId: '' });
+      setIsEditDialogOpen(false);
+      fetchUsers();
+      
+      toast({
+        title: "Success!",
+        description: "User updated successfully",
+      });
+    } catch (error) {
+      console.error('Error updating user:', error);
+      setError('Failed to update user');
+      toast({
+        title: "Error",
+        description: "Failed to update user",
+        variant: "destructive",
+      });
     } finally {
       setLoading(false);
     }
@@ -162,58 +248,57 @@ export const UserManagement: React.FC = () => {
         return;
       }
 
+      let successCount = 0;
+      let errorCount = 0;
+
       for (const userData of usersToCreate) {
-        if (userData.role === 'STUDENT' && userData.rollNumber) {
-          const email = `${userData.rollNumber}@student.ignite.edu`;
-          const password = userData.password || 'student123';
+        try {
+          let email = userData.email;
+          if (userData.role === 'STUDENT' && userData.rollNumber) {
+            email = `${userData.rollNumber}@student.ignite.edu`;
+          }
+
+          const userCredential = await createUserWithEmailAndPassword(auth, email, userData.password || 'default123');
+          const selectedBrigade = brigades.find(b => b.name === userData.brigadeName);
           
-          try {
-            const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-            const selectedBrigade = brigades.find(b => b.name === userData.brigadeName);
-            
-            const userDoc = {
-              id: userCredential.user.uid,
-              name: userData.name,
-              email: email,
+          const userDoc = {
+            id: userCredential.user.uid,
+            name: userData.name,
+            email: email,
+            role: userData.role || 'STUDENT',
+            createdAt: new Date(),
+            isActive: true,
+            ...(userData.role === 'STUDENT' ? {
               rollNumber: userData.rollNumber,
-              role: 'STUDENT',
               brigadeId: selectedBrigade?.id,
               brigadeName: userData.brigadeName,
-              createdAt: new Date(),
-              isActive: true
-            };
-            
-            await addDoc(collection(db, 'users'), userDoc);
-          } catch (error) {
-            console.error(`Error creating user ${userData.rollNumber}:`, error);
-          }
-        } else if (userData.role === 'ADMIN' && userData.email) {
-          const password = userData.password || 'admin123';
+            } : {})
+          };
           
-          try {
-            const userCredential = await createUserWithEmailAndPassword(auth, userData.email, password);
-            
-            const userDoc = {
-              id: userCredential.user.uid,
-              name: userData.name,
-              email: userData.email,
-              role: 'ADMIN',
-              createdAt: new Date(),
-              isActive: true
-            };
-            
-            await addDoc(collection(db, 'users'), userDoc);
-          } catch (error) {
-            console.error(`Error creating admin ${userData.email}:`, error);
-          }
+          await addDoc(collection(db, 'users'), userDoc);
+          successCount++;
+        } catch (error) {
+          console.error(`Error creating user ${userData.name}:`, error);
+          errorCount++;
         }
       }
       
       setBulkUploadFile(null);
+      setIsBulkUploadDialogOpen(false);
       fetchUsers();
+      
+      toast({
+        title: "Bulk Upload Complete",
+        description: `${successCount} users created successfully. ${errorCount} failed.`,
+      });
     } catch (error) {
       console.error('Error bulk uploading users:', error);
       setError('Failed to bulk upload users');
+      toast({
+        title: "Error",
+        description: "Failed to bulk upload users",
+        variant: "destructive",
+      });
     } finally {
       setLoading(false);
     }
@@ -227,9 +312,17 @@ export const UserManagement: React.FC = () => {
     try {
       await deleteDoc(doc(db, 'users', userId));
       fetchUsers();
+      toast({
+        title: "Success!",
+        description: "User deleted successfully",
+      });
     } catch (error) {
       console.error('Error deleting user:', error);
-      setError('Failed to delete user');
+      toast({
+        title: "Error",
+        description: "Failed to delete user",
+        variant: "destructive",
+      });
     }
   };
 
@@ -237,10 +330,29 @@ export const UserManagement: React.FC = () => {
     try {
       await updateDoc(doc(db, 'users', userId), { isActive: !currentStatus });
       fetchUsers();
+      toast({
+        title: "Success!",
+        description: `User ${!currentStatus ? 'activated' : 'deactivated'} successfully`,
+      });
     } catch (error) {
       console.error('Error updating user status:', error);
-      setError('Failed to update user status');
+      toast({
+        title: "Error",
+        description: "Failed to update user status",
+        variant: "destructive",
+      });
     }
+  };
+
+  const startEditUser = (user: User) => {
+    setEditingUser(user);
+    setEditForm({
+      name: user.name,
+      email: user.email || '',
+      rollNumber: user.rollNumber || '',
+      brigadeId: user.brigadeId || ''
+    });
+    setIsEditDialogOpen(true);
   };
 
   const filteredUsers = users.filter(user => {
@@ -260,14 +372,14 @@ export const UserManagement: React.FC = () => {
           <p className="text-gray-600 mt-2">Manage admin and student accounts efficiently</p>
         </div>
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
-          <Dialog>
+          <Dialog open={isBulkUploadDialogOpen} onOpenChange={setIsBulkUploadDialogOpen}>
             <DialogTrigger asChild>
               <Button variant="outline" className="border-purple-200 text-purple-600 hover:bg-purple-50 rounded-lg">
                 <Upload className="h-4 w-4 mr-2" />
                 Bulk Upload
               </Button>
             </DialogTrigger>
-            <DialogContent className="max-w-2xl">
+            <DialogContent className="max-w-2xl bg-white">
               <DialogHeader>
                 <DialogTitle className="flex items-center space-x-2">
                   <Upload className="h-5 w-5 text-purple-600" />
@@ -308,6 +420,13 @@ export const UserManagement: React.FC = () => {
                   />
                 </div>
                 
+                {error && (
+                  <Alert className="border-red-200 bg-red-50">
+                    <AlertCircle className="h-4 w-4" />
+                    <AlertDescription className="text-red-800">{error}</AlertDescription>
+                  </Alert>
+                )}
+                
                 <Button onClick={handleBulkUpload} disabled={loading || !bulkUploadFile} className="w-full bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 rounded-lg">
                   {loading ? 'Uploading...' : 'Upload Users'}
                 </Button>
@@ -315,14 +434,14 @@ export const UserManagement: React.FC = () => {
             </DialogContent>
           </Dialog>
           
-          <Dialog>
+          <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
             <DialogTrigger asChild>
               <Button className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white rounded-lg">
                 <Plus className="h-4 w-4 mr-2" />
                 Add User
               </Button>
             </DialogTrigger>
-            <DialogContent className="max-w-md">
+            <DialogContent className="max-w-md bg-white">
               <DialogHeader>
                 <DialogTitle className="flex items-center space-x-2">
                   <Plus className="h-5 w-5 text-purple-600" />
@@ -410,6 +529,13 @@ export const UserManagement: React.FC = () => {
                   />
                 </div>
                 
+                {error && (
+                  <Alert className="border-red-200 bg-red-50">
+                    <AlertCircle className="h-4 w-4" />
+                    <AlertDescription className="text-red-800">{error}</AlertDescription>
+                  </Alert>
+                )}
+                
                 <Button type="submit" disabled={loading} className="w-full bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 rounded-lg">
                   {loading ? 'Creating...' : 'Create User'}
                 </Button>
@@ -418,13 +544,6 @@ export const UserManagement: React.FC = () => {
           </Dialog>
         </div>
       </div>
-
-      {error && (
-        <Alert className="border-red-200 bg-red-50 rounded-lg">
-          <AlertCircle className="h-4 w-4" />
-          <AlertDescription className="text-red-800">{error}</AlertDescription>
-        </Alert>
-      )}
 
       {/* Filters */}
       <Card className="border-0 shadow-lg">
@@ -512,6 +631,14 @@ export const UserManagement: React.FC = () => {
                     <Button
                       variant="outline"
                       size="sm"
+                      onClick={() => startEditUser(user)}
+                      className="border-blue-200 text-blue-600 hover:bg-blue-50 rounded-lg"
+                    >
+                      <Edit className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
                       onClick={() => toggleUserStatus(user.id, user.isActive)}
                       className="rounded-lg"
                     >
@@ -532,6 +659,96 @@ export const UserManagement: React.FC = () => {
           ))
         )}
       </div>
+
+      {/* Edit User Dialog */}
+      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <DialogContent className="max-w-md bg-white">
+          <DialogHeader>
+            <DialogTitle className="flex items-center space-x-2">
+              <Edit className="h-5 w-5 text-blue-600" />
+              <span>Edit User</span>
+            </DialogTitle>
+            <DialogDescription>
+              Update user information
+            </DialogDescription>
+          </DialogHeader>
+          <form onSubmit={handleEditUser} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="editUserName">Name</Label>
+              <Input
+                id="editUserName"
+                value={editForm.name}
+                onChange={(e) => setEditForm(prev => ({ ...prev, name: e.target.value }))}
+                placeholder="Enter full name"
+                className="rounded-lg"
+              />
+            </div>
+            {editingUser?.role === 'ADMIN' ? (
+              <div className="space-y-2">
+                <Label htmlFor="editUserEmail">Email</Label>
+                <Input
+                  id="editUserEmail"
+                  type="email"
+                  value={editForm.email}
+                  onChange={(e) => setEditForm(prev => ({ ...prev, email: e.target.value }))}
+                  placeholder="Enter email address"
+                  className="rounded-lg"
+                />
+              </div>
+            ) : (
+              <>
+                <div className="space-y-2">
+                  <Label htmlFor="editUserRollNumber">Roll Number</Label>
+                  <Input
+                    id="editUserRollNumber"
+                    value={editForm.rollNumber}
+                    onChange={(e) => setEditForm(prev => ({ ...prev, rollNumber: e.target.value }))}
+                    placeholder="Enter roll number"
+                    className="rounded-lg"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="editUserBrigade">Brigade</Label>
+                  <Select value={editForm.brigadeId} onValueChange={(value) => 
+                    setEditForm(prev => ({ ...prev, brigadeId: value }))}>
+                    <SelectTrigger className="rounded-lg">
+                      <SelectValue placeholder="Select brigade" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {brigades.map(brigade => (
+                        <SelectItem key={brigade.id} value={brigade.id}>
+                          {brigade.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </>
+            )}
+            
+            {error && (
+              <Alert className="border-red-200 bg-red-50">
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription className="text-red-800">{error}</AlertDescription>
+              </Alert>
+            )}
+            
+            <div className="flex space-x-2">
+              <Button type="submit" disabled={loading} className="flex-1">
+                <Save className="h-4 w-4 mr-2" />
+                {loading ? 'Updating...' : 'Update User'}
+              </Button>
+              <Button 
+                type="button" 
+                variant="outline" 
+                onClick={() => setIsEditDialogOpen(false)}
+              >
+                Cancel
+              </Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
 
       {/* Statistics */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">

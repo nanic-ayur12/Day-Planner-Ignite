@@ -320,9 +320,6 @@ export const DayActivities: React.FC = () => {
   };
 
   const getVisibleActivities = () => {
-    if (timePhase === 'preview' || timePhase === 'review') {
-      return eventPlans;
-    }
     return eventPlans;
   };
 
@@ -330,10 +327,20 @@ export const DayActivities: React.FC = () => {
     return submissions.some(sub => sub.eventPlanId === activityId) || submissionData[activityId];
   };
 
+  const canSubmit = (activity: EventPlan) => {
+    const now = new Date();
+    const activityDate = new Date(activity.date);
+    const endOfDay = new Date(activityDate);
+    endOfDay.setHours(23, 59, 59, 999);
+    
+    return now <= endOfDay && !isSubmitted(activity.id);
+  };
+
   const renderSubmissionInterface = (activity: EventPlan) => {
     const submission = submissionData[activity.id] || submissions.find(sub => sub.eventPlanId === activity.id);
     const progress = uploadProgress[activity.id];
     const submitted = isSubmitted(activity.id);
+    const submissionAllowed = canSubmit(activity);
 
     if (submitted) {
       return (
@@ -352,6 +359,20 @@ export const DayActivities: React.FC = () => {
           </p>
           <p className="text-xs text-green-600 mt-1">
             Submitted at: {(submission?.submittedAt || new Date()).toLocaleString()}
+          </p>
+        </div>
+      );
+    }
+
+    if (!submissionAllowed) {
+      return (
+        <div className="mt-4 p-4 bg-gray-50 border border-gray-200 rounded-lg">
+          <div className="flex items-center space-x-2">
+            <AlertCircle className="h-5 w-5 text-gray-600" />
+            <span className="text-gray-800 font-medium">Submission Period Ended</span>
+          </div>
+          <p className="text-sm text-gray-700 mt-1">
+            Submissions were due by 11:59 PM on {activity.date.toLocaleDateString()}
           </p>
         </div>
       );
