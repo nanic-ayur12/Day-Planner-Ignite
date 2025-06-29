@@ -57,13 +57,6 @@ export default function LoginPage() {
     }
   };
 
-  const fillDemoCredentials = (type: string) => {
-    if (type === 'admin') {
-      setAdminCredentials({ email: 'admin@ignite.edu', password: 'admin123' });
-    } else {
-      setStudentCredentials({ rollNumber: 'CS2021001', password: 'student123' });
-    }
-  };
 
   return (
     <div className="min-h-screen bg-gray-50 flex">
@@ -175,14 +168,6 @@ export default function LoginPage() {
                     </div>
 
                     <div className="space-y-3">
-                      <Button 
-                        type="button"
-                        variant="outline"
-                        onClick={() => fillDemoCredentials('student')}
-                        className="w-full h-10 border-gray-200 text-black hover:bg-gray-50 hover:text-black rounded-lg text-sm font-medium"
-                      >
-                        Use Demo Credentials
-                      </Button>
                       <Button 
                         onClick={handleStudentLogin}
                         className="w-full h-12 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-all duration-200 shadow-lg hover:shadow-xl group"
