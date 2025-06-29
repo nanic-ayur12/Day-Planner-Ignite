@@ -17,7 +17,7 @@ function App() {
   return (
     <AuthProvider>
       <Router>
-        <div className="min-h-screen bg-gray-50">
+        <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
           <Routes>
             <Route path="/login" element={<LoginPage />} />
             
@@ -33,7 +33,17 @@ function App() {
               <Route path="users" element={<UserManagement />} />
               <Route path="submissions" element={<SubmissionManagement />} />
               <Route path="analytics" element={<Analytics />} />
-              <Route path="settings" element={<div className="p-8 text-center text-gray-600">Settings - Coming Soon</div>} />
+              <Route path="settings" element={
+                <div className="flex items-center justify-center min-h-[400px]">
+                  <div className="text-center space-y-4">
+                    <div className="w-16 h-16 bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl flex items-center justify-center mx-auto">
+                      <span className="text-2xl">⚙️</span>
+                    </div>
+                    <h3 className="text-2xl font-bold text-gray-900">Settings</h3>
+                    <p className="text-gray-600">Coming Soon - Advanced configuration options</p>
+                  </div>
+                </div>
+              } />
             </Route>
             
             {/* Student Routes */}
