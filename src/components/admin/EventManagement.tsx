@@ -33,6 +33,7 @@ export const EventManagement: React.FC = () => {
   const [editingEvent, setEditingEvent] = useState<Event | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [isAddTaskDialogOpen, setIsAddTaskDialogOpen] = useState(false);
   const { userProfile } = useAuth();
 
   const [eventForm, setEventForm] = useState({
@@ -188,6 +189,8 @@ export const EventManagement: React.FC = () => {
       };
 
       await addDoc(collection(db, 'eventPlans'), planData);
+      
+      // Reset form and close dialog
       setPlanForm({
         title: '',
         description: '',
@@ -198,6 +201,9 @@ export const EventManagement: React.FC = () => {
         submissionType: 'file',
         fileSizeLimit: 5
       });
+      setIsAddTaskDialogOpen(false); // Close the dialog
+      setError(''); // Clear any errors
+      
       fetchEventPlans(selectedEvent.id);
     } catch (error) {
       console.error('Error creating event plan:', error);
@@ -435,7 +441,7 @@ export const EventManagement: React.FC = () => {
                   <h2 className="text-xl font-semibold text-black">Plans for {selectedEvent.name}</h2>
                   <p className="text-gray-600">Kanban view: Dates as columns, Times as rows</p>
                 </div>
-                <Dialog>
+                <Dialog open={isAddTaskDialogOpen} onOpenChange={setIsAddTaskDialogOpen}>
                   <DialogTrigger asChild>
                     <Button className="bg-green-600 hover:bg-green-700">
                       <Plus className="h-4 w-4 mr-2" />
@@ -582,6 +588,12 @@ export const EventManagement: React.FC = () => {
                           </div>
                         )}
                       </div>
+                      {error && (
+                        <Alert className="border-red-200 bg-red-50">
+                          <AlertCircle className="h-4 w-4" />
+                          <AlertDescription className="text-red-800">{error}</AlertDescription>
+                        </Alert>
+                      )}
                       <Button type="submit" disabled={loading} className="w-full">
                         {loading ? 'Creating...' : 'Create Plan'}
                       </Button>
