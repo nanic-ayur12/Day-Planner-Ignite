@@ -27,6 +27,7 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, requir
   }
 
   if (requiredRole && userProfile.role !== requiredRole) {
+    // Redirect based on actual user role
     const redirectPath = userProfile.role === 'ADMIN' ? '/admin' : '/student';
     return <Navigate to={redirectPath} replace />;
   }

@@ -41,7 +41,27 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         email = `${identifier}@student.ignite.edu`;
       }
       
-      await signInWithEmailAndPassword(auth, email, password);
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      
+      // Fetch user profile to verify role
+      const userDoc = await getDoc(doc(db, 'users', userCredential.user.uid));
+      if (userDoc.exists()) {
+        const userData = userDoc.data() as User;
+        
+        // Verify the role matches the login type
+        if (isStudent && userData.role !== 'STUDENT') {
+          await signOut(auth);
+          throw new Error('Invalid credentials for student login');
+        }
+        if (!isStudent && userData.role !== 'ADMIN') {
+          await signOut(auth);
+          throw new Error('Invalid credentials for admin login');
+        }
+      } else {
+        await signOut(auth);
+        throw new Error('User profile not found');
+      }
+      
     } catch (error) {
       console.error('Login error:', error);
       throw error;
