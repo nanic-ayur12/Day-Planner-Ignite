@@ -25,8 +25,8 @@ import {
   Filter,
   Save
 } from 'lucide-react';
-import { collection, setDoc, getDocs, updateDoc, deleteDoc, doc, getDoc, signOut } from 'firebase/firestore';
-import { createUserWithEmailAndPassword, signInWithEmailAndPassword } from 'firebase/auth';
+import { collection, setDoc, getDocs, updateDoc, deleteDoc, doc, getDoc } from 'firebase/firestore';
+import { createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut } from 'firebase/auth';
 import { db, auth } from '@/lib/firebase';
 import { User, Brigade } from '@/types';
 import { generateStudentTemplate, generateAdminTemplate, parseStudentExcel, parseAdminExcel } from '@/lib/excelTemplates';
