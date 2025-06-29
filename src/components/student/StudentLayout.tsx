@@ -199,10 +199,7 @@ export const StudentLayout: React.FC = () => {
                 })}
               </p>
             </div>
-            <div className="text-left sm:text-right">
-              <p className="text-sm font-semibold text-black">{userProfile?.name}</p>
-              <p className="text-xs text-gray-500">{userProfile?.brigadeName}</p>
-            </div>
+
           </div>
         </div>
       </div>
