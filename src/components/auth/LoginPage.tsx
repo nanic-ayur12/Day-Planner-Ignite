@@ -71,12 +71,12 @@ export default function LoginPage() {
           </div>
           <div className="space-y-4">
             <h1 className="text-5xl font-bold text-black leading-tight">
-              Ignite Planner
+             Student Ignite Portal
             </h1>
             <div className="space-y-2">
-              <p className="text-xl text-blue-600 font-semibold">Kumaraguru College</p>
+              <p className="text-xl text-blue-600 font-semibold">Kumaraguru Institutions</p>
               <p className="text-lg text-gray-600 leading-relaxed">
-                Streamlined Lead & Co-Lead Management System
+                Streamlined Student Access System
               </p>
             </div>
           </div>
