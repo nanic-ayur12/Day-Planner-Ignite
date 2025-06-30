@@ -56,9 +56,18 @@ const getActivityStatus = (activity: EventPlan, currentTime: Date) => {
   return 'completed';
 };
 
+// Helper function to get current date in IST
+const getCurrentDateIST = () => {
+  const now = new Date();
+  // Convert to IST (UTC+5:30)
+  const istOffset = 5.5 * 60 * 60 * 1000; // 5.5 hours in milliseconds
+  const istTime = new Date(now.getTime() + istOffset);
+  return istTime.toISOString().split('T')[0];
+};
+
 export const DayActivities: React.FC = () => {
   const [currentTime, setCurrentTime] = useState(new Date());
-  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
+  const [selectedDate, setSelectedDate] = useState(getCurrentDateIST());
   const [timePhase, setTimePhase] = useState(getTimePhase());
   const [eventPlans, setEventPlans] = useState<EventPlan[]>([]);
   const [submissions, setSubmissions] = useState<Submission[]>([]);
@@ -521,15 +530,16 @@ export const DayActivities: React.FC = () => {
         </div>
         
         <Alert className="border border-blue-200 bg-blue-50">
-          <Clock className="h-4 w-4" />
-          <AlertDescription className="text-blue-800">
-            {renderPhaseMessage()} • Current time: {currentTime.toLocaleTimeString()}
-          </AlertDescription>
+          <div className="flex items-center justify-left space-x-2">
+            <Clock className="h-4 w-4" />
+            <AlertDescription className="text-blue-800 text-center">
+              {renderPhaseMessage()} • Current time: {currentTime.toLocaleTimeString()}
+            </AlertDescription>
+          </div>
         </Alert>
 
         <div className="flex flex-col sm:flex-row sm:items-center space-y-2 sm:space-y-0 sm:space-x-4">
           <div className="flex items-center space-x-2">
-            <Calendar className="h-4 w-4 text-gray-600" />
             <Input
               type="date"
               value={selectedDate}

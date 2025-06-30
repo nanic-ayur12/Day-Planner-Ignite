@@ -47,7 +47,7 @@ export const AdminLayout: React.FC = () => {
     if (!hasShownToast) {
       toast({
         title: "Login Successful!",
-        description: "Welcome to your admin dashboard",
+        description: "Welcome to admin dashboard",
       });
       sessionStorage.setItem('adminLoginToastShown', 'true');
     }

@@ -33,7 +33,7 @@ export const StudentLayout: React.FC = () => {
     if (!hasShownToast) {
       toast({
         title: "Login Successful!",
-        description: "Welcome to your student dashboard",
+        description: "Welcome to student dashboard",
       });
       sessionStorage.setItem('studentLoginToastShown', 'true');
     }
@@ -64,9 +64,9 @@ export const StudentLayout: React.FC = () => {
               </div>
               <div className="hidden sm:block">
                 <h1 className="text-xl font-bold text-black">
-                  Ignite Day Planner
+                  Ignite Portal
                 </h1>
-                <p className="text-xs text-gray-600">Student Portal</p>
+                <p className="text-xs text-gray-600">Student </p>
               </div>
             </div>
 
@@ -199,10 +199,7 @@ export const StudentLayout: React.FC = () => {
                 })}
               </p>
             </div>
-            <div className="text-left sm:text-right">
-              <p className="text-sm font-semibold text-black">{userProfile?.name}</p>
-              <p className="text-xs text-gray-500">{userProfile?.brigadeName}</p>
-            </div>
+
           </div>
         </div>
       </div>
