@@ -64,7 +64,7 @@ const getCurrentDateIST = () => {
   return istTime.toISOString().split('T')[0];
 };
 
-export const DayActivities: React.FC = () => {
+const DayActivities: React.FC = () => {
   const [currentTime, setCurrentTime] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState(getCurrentDateIST());
   const [timePhase, setTimePhase] = useState(getTimePhase());
@@ -666,3 +666,5 @@ export const DayActivities: React.FC = () => {
     </div>
   );
 };
+
+export default DayActivities;

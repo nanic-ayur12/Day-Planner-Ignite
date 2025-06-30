@@ -10,7 +10,7 @@ import { BrigadeManagement } from '@/components/admin/BrigadeManagement';
 import { SubmissionManagement } from '@/components/admin/SubmissionManagement';
 import { Analytics } from '@/components/admin/Analytics';
 import { StudentLayout } from '@/components/student/StudentLayout';
-import { DayActivities } from '@/components/student/DayActivities';
+import DayActivities from '@/components/student/DayActivities';
 import { MySubmissions } from '@/components/student/MySubmissions';
 import { StudentDashboard } from '@/components/student/StudentDashboard';
 import { Toaster } from '@/components/ui/toaster';
