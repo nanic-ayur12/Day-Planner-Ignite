@@ -22,6 +22,7 @@ import { collection, addDoc, getDocs, updateDoc, deleteDoc, doc, query, where } 
 import { db } from '@/lib/firebase';
 import { useAuth } from '@/contexts/AuthContext';
 import { Event, EventPlan } from '@/types';
+import { useToast } from '@/hooks/use-toast';
 
 export const EventManagement: React.FC = () => {
   const [events, setEvents] = useState<Event[]>([]);
@@ -32,6 +33,7 @@ export const EventManagement: React.FC = () => {
   const [error, setError] = useState('');
   const [isAddTaskDialogOpen, setIsAddTaskDialogOpen] = useState(false);
   const { userProfile } = useAuth();
+  const { toast } = useToast();
 
   const [eventForm, setEventForm] = useState({
     name: '',
@@ -122,9 +124,20 @@ export const EventManagement: React.FC = () => {
       await addDoc(collection(db, 'events'), eventData);
       setEventForm({ name: '', startDate: '', endDate: '' });
       fetchEvents();
+      
+      toast({
+        title: "Success!",
+        description: "Event created successfully",
+        variant: "success",
+      });
     } catch (error) {
       console.error('Error creating event:', error);
       setError('Failed to create event');
+      toast({
+        title: "Error",
+        description: "Failed to create event",
+        variant: "destructive",
+      });
     } finally {
       setLoading(false);
     }
@@ -149,18 +162,75 @@ export const EventManagement: React.FC = () => {
       setEditingEvent(null);
       setEditForm({ startDate: '', endDate: '' });
       fetchEvents();
+      
+      toast({
+        title: "Success!",
+        description: "Event updated successfully",
+        variant: "success",
+      });
     } catch (error) {
       console.error('Error updating event:', error);
       setError('Failed to update event');
+      toast({
+        title: "Error",
+        description: "Failed to update event",
+        variant: "destructive",
+      });
     } finally {
       setLoading(false);
     }
+  };
+
+  // Check for time conflicts
+  const hasTimeConflict = (date: Date, startTime: string, endTime: string, excludePlanId?: string) => {
+    const conflictingPlans = eventPlans.filter(plan => {
+      if (excludePlanId && plan.id === excludePlanId) return false;
+      
+      const planDate = plan.date.toDateString();
+      const targetDate = date.toDateString();
+      
+      if (planDate !== targetDate) return false;
+      
+      const planStartTime = convertTo24Hour(plan.time);
+      const planEndTime = convertTo24Hour(plan.endTime || plan.time);
+      const newStartTime = convertTo24Hour(startTime);
+      const newEndTime = convertTo24Hour(endTime);
+      
+      // Check for overlap
+      return (newStartTime < planEndTime && newEndTime > planStartTime);
+    });
+    
+    return conflictingPlans.length > 0;
+  };
+
+  const convertTo24Hour = (time12h: string): number => {
+    const [time, modifier] = time12h.split(' ');
+    let [hours, minutes] = time.split(':').map(Number);
+    
+    if (modifier === 'PM' && hours !== 12) hours += 12;
+    if (modifier === 'AM' && hours === 12) hours = 0;
+    
+    return hours + minutes / 60;
   };
 
   const handleCreateEventPlan = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedEvent || !planForm.title || !planForm.date || !planForm.time) {
       setError('Please fill in all required fields');
+      return;
+    }
+
+    // Check for time conflicts
+    const planDate = new Date(planForm.date);
+    const endTime = planForm.endTime || planForm.time;
+    
+    if (hasTimeConflict(planDate, planForm.time, endTime)) {
+      setError('Time conflict detected! Another activity is scheduled during this time.');
+      toast({
+        title: "Time Conflict",
+        description: "Another activity is already scheduled during this time slot",
+        variant: "destructive",
+      });
       return;
     }
 
@@ -198,13 +268,24 @@ export const EventManagement: React.FC = () => {
         submissionType: 'file',
         fileSizeLimit: 5
       });
-      setIsAddTaskDialogOpen(false); // Close the dialog
-      setError(''); // Clear any errors
+      setIsAddTaskDialogOpen(false);
+      setError('');
       
       fetchEventPlans(selectedEvent.id);
+      
+      toast({
+        title: "Success!",
+        description: "Activity created successfully",
+        variant: "success",
+      });
     } catch (error) {
       console.error('Error creating event plan:', error);
       setError('Failed to create event plan');
+      toast({
+        title: "Error",
+        description: "Failed to create activity",
+        variant: "destructive",
+      });
     } finally {
       setLoading(false);
     }
@@ -222,9 +303,20 @@ export const EventManagement: React.FC = () => {
         setSelectedEvent(null);
         setEventPlans([]);
       }
+      
+      toast({
+        title: "Success!",
+        description: "Event deleted successfully",
+        variant: "success",
+      });
     } catch (error) {
       console.error('Error deleting event:', error);
       setError('Failed to delete event');
+      toast({
+        title: "Error",
+        description: "Failed to delete event",
+        variant: "destructive",
+      });
     }
   };
 
@@ -238,9 +330,20 @@ export const EventManagement: React.FC = () => {
       if (selectedEvent) {
         fetchEventPlans(selectedEvent.id);
       }
+      
+      toast({
+        title: "Success!",
+        description: "Activity deleted successfully",
+        variant: "success",
+      });
     } catch (error) {
       console.error('Error deleting event plan:', error);
       setError('Failed to delete event plan');
+      toast({
+        title: "Error",
+        description: "Failed to delete activity",
+        variant: "destructive",
+      });
     }
   };
 
@@ -284,429 +387,477 @@ export const EventManagement: React.FC = () => {
     return slots;
   };
 
-  // Get plans for specific date and time
+  // Get plans for specific date and time - now handles multi-hour activities
   const getPlansForDateTime = (date: Date, timeSlot: string) => {
     return eventPlans.filter(plan => {
       const planDate = plan.date.toISOString().split('T')[0];
       const targetDate = date.toISOString().split('T')[0];
-      return planDate === targetDate && plan.time === timeSlot;
+      
+      if (planDate !== targetDate) return false;
+      
+      const planStartTime = convertTo24Hour(plan.time);
+      const planEndTime = convertTo24Hour(plan.endTime || plan.time);
+      const slotTime = convertTo24Hour(timeSlot);
+      
+      // Check if this time slot falls within the activity duration
+      return slotTime >= planStartTime && slotTime < planEndTime;
     });
+  };
+
+  // Calculate activity span in hours
+  const getActivitySpan = (plan: EventPlan) => {
+    if (!plan.endTime || plan.endTime === plan.time) return 1;
+    
+    const startTime = convertTo24Hour(plan.time);
+    const endTime = convertTo24Hour(plan.endTime);
+    
+    return Math.max(1, Math.ceil(endTime - startTime));
+  };
+
+  // Check if this is the starting slot for an activity
+  const isStartingSlot = (plan: EventPlan, timeSlot: string) => {
+    return plan.time === timeSlot;
   };
 
   const dateRange = getDateRange();
   const timeSlots = getTimeSlots();
 
   return (
-    <div className="space-y-6 w-full max-w-7xl mx-auto">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <h1 className="text-3xl font-bold text-black">Event Management</h1>
-        <Dialog>
-          <DialogTrigger asChild>
-            <Button className="bg-blue-600 hover:bg-blue-700">
-              <Plus className="h-4 w-4 mr-2" />
-              Create Event
-            </Button>
-          </DialogTrigger>
+    <div className="w-full min-h-screen">
+      {/* Full width container */}
+      <div className="w-full px-4 py-6">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+          <h1 className="text-3xl font-bold text-black">Event Management</h1>
+          <Dialog>
+            <DialogTrigger asChild>
+              <Button className="bg-blue-600 hover:bg-blue-700">
+                <Plus className="h-4 w-4 mr-2" />
+                Create Event
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="bg-white">
+              <DialogHeader>
+                <DialogTitle>Create New Event</DialogTitle>
+                <DialogDescription>
+                  Create a new event to organize activities and plans
+                </DialogDescription>
+              </DialogHeader>
+              <form onSubmit={handleCreateEvent} className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="eventName">Event Name</Label>
+                  <Input
+                    id="eventName"
+                    value={eventForm.name}
+                    onChange={(e) => setEventForm(prev => ({ ...prev, name: e.target.value }))}
+                    placeholder="Enter event name"
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="startDate">Start Date</Label>
+                    <Input
+                      id="startDate"
+                      type="date"
+                      value={eventForm.startDate}
+                      onChange={(e) => setEventForm(prev => ({ ...prev, startDate: e.target.value }))}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="endDate">End Date</Label>
+                    <Input
+                      id="endDate"
+                      type="date"
+                      value={eventForm.endDate}
+                      onChange={(e) => setEventForm(prev => ({ ...prev, endDate: e.target.value }))}
+                    />
+                  </div>
+                </div>
+                <Button type="submit" disabled={loading} className="w-full">
+                  {loading ? 'Creating...' : 'Create Event'}
+                </Button>
+              </form>
+            </DialogContent>
+          </Dialog>
+        </div>
+
+        {error && (
+          <Alert className="border-red-200 bg-red-50 mb-6">
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription className="text-red-800">{error}</AlertDescription>
+          </Alert>
+        )}
+
+        <Tabs defaultValue="events" className="w-full">
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="events">Events</TabsTrigger>
+            <TabsTrigger value="plans" disabled={!selectedEvent}>
+              Event Plans {selectedEvent && `(${selectedEvent.name})`}
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="events" className="space-y-4">
+            <div className="grid gap-4">
+              {events.length === 0 ? (
+                <Card className="p-8 text-center">
+                  <CardContent>
+                    <Calendar className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                    <h3 className="text-lg font-medium text-black mb-2">No Events Created</h3>
+                    <p className="text-gray-600">Create your first event to get started.</p>
+                  </CardContent>
+                </Card>
+              ) : (
+                events.map((event) => (
+                  <Card key={event.id} className="hover:shadow-md transition-shadow border">
+                    <CardHeader>
+                      <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
+                        <div className="space-y-2">
+                          <CardTitle className="text-xl text-black">{event.name}</CardTitle>
+                          <CardDescription>
+                            <div className="flex flex-wrap items-center gap-4 text-sm">
+                              <span className="flex items-center space-x-1">
+                                <Calendar className="h-4 w-4" />
+                                <span>{event.startDate.toLocaleDateString()} - {event.endDate.toLocaleDateString()}</span>
+                              </span>
+                              <Badge variant={event.isActive ? 'default' : 'secondary'}>
+                                {event.isActive ? 'Active' : 'Inactive'}
+                              </Badge>
+                            </div>
+                          </CardDescription>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setSelectedEvent(event)}
+                          >
+                            <FileText className="h-4 w-4 mr-2" />
+                            Manage Plans
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => startEditEvent(event)}
+                            className="border-blue-200 text-blue-600 hover:bg-blue-50"
+                          >
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleDeleteEvent(event.id)}
+                            className="border-red-200 text-red-600 hover:bg-red-50"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    </CardHeader>
+                  </Card>
+                ))
+              )}
+            </div>
+          </TabsContent>
+
+          <TabsContent value="plans" className="space-y-4">
+            {selectedEvent && (
+              <>
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                  <div>
+                    <h2 className="text-xl font-semibold text-black">Plans for {selectedEvent.name}</h2>
+                    <p className="text-gray-600">Schedule view: Dates as columns, Times as rows</p>
+                  </div>
+                  <Dialog open={isAddTaskDialogOpen} onOpenChange={setIsAddTaskDialogOpen}>
+                    <DialogTrigger asChild>
+                      <Button className="bg-green-600 hover:bg-green-700">
+                        <Plus className="h-4 w-4 mr-2" />
+                        Add Activity
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto bg-white">
+                      <DialogHeader>
+                        <DialogTitle>Create Activity Plan</DialogTitle>
+                        <DialogDescription>
+                          Create a new activity plan for {selectedEvent.name}
+                        </DialogDescription>
+                      </DialogHeader>
+                      <form onSubmit={handleCreateEventPlan} className="space-y-4">
+                        <div className="space-y-2">
+                          <Label htmlFor="planTitle">Title</Label>
+                          <Input
+                            id="planTitle"
+                            value={planForm.title}
+                            onChange={(e) => setPlanForm(prev => ({ ...prev, title: e.target.value }))}
+                            placeholder="Enter plan title"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="planDescription">Description</Label>
+                          <Textarea
+                            id="planDescription"
+                            value={planForm.description}
+                            onChange={(e) => setPlanForm(prev => ({ ...prev, description: e.target.value }))}
+                            placeholder="Enter plan description"
+                            rows={3}
+                          />
+                        </div>
+                        <div className="grid grid-cols-3 gap-4">
+                          <div className="space-y-2">
+                            <Label htmlFor="planDate">Date</Label>
+                            <Input
+                              id="planDate"
+                              type="date"
+                              value={planForm.date}
+                              onChange={(e) => setPlanForm(prev => ({ ...prev, date: e.target.value }))}
+                              min={selectedEvent.startDate.toISOString().split('T')[0]}
+                              max={selectedEvent.endDate.toISOString().split('T')[0]}
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <Label htmlFor="planTime">Start Time</Label>
+                            <Select value={planForm.time} onValueChange={(value) => setPlanForm(prev => ({ ...prev, time: value }))}>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select time" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {timeSlots.map(slot => (
+                                  <SelectItem key={slot.time24} value={slot.time12}>{slot.time12}</SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          <div className="space-y-2">
+                            <Label htmlFor="planEndTime">End Time</Label>
+                            <Select value={planForm.endTime} onValueChange={(value) => setPlanForm(prev => ({ ...prev, endTime: value }))}>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select end time" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {timeSlots.map(slot => (
+                                  <SelectItem key={slot.time24} value={slot.time12}>{slot.time12}</SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
+                        </div>
+                        <div className="space-y-4">
+                          <div className="space-y-2">
+                            <Label>Plan Type</Label>
+                            <div className="flex space-x-4">
+                              <label className="flex items-center space-x-2">
+                                <input
+                                  type="radio"
+                                  value="withoutSubmission"
+                                  checked={planForm.planType === 'withoutSubmission'}
+                                  onChange={(e) => setPlanForm(prev => ({ ...prev, planType: e.target.value as any }))}
+                                />
+                                <span>Without Submission</span>
+                              </label>
+                              <label className="flex items-center space-x-2">
+                                <input
+                                  type="radio"
+                                  value="withSubmission"
+                                  checked={planForm.planType === 'withSubmission'}
+                                  onChange={(e) => setPlanForm(prev => ({ ...prev, planType: e.target.value as any }))}
+                                />
+                                <span>With Submission</span>
+                              </label>
+                            </div>
+                          </div>
+                          {planForm.planType === 'withSubmission' && (
+                            <div className="space-y-4 p-4 bg-gray-50 rounded-lg">
+                              <div className="space-y-2">
+                                <Label>Submission Type</Label>
+                                <div className="flex space-x-4">
+                                  <label className="flex items-center space-x-2">
+                                    <input
+                                      type="radio"
+                                      value="file"
+                                      checked={planForm.submissionType === 'file'}
+                                      onChange={(e) => setPlanForm(prev => ({ ...prev, submissionType: e.target.value as any }))}
+                                    />
+                                    <span>File Upload</span>
+                                  </label>
+                                  <label className="flex items-center space-x-2">
+                                    <input
+                                      type="radio"
+                                      value="text"
+                                      checked={planForm.submissionType === 'text'}
+                                      onChange={(e) => setPlanForm(prev => ({ ...prev, submissionType: e.target.value as any }))}
+                                    />
+                                    <span>Text Response</span>
+                                  </label>
+                                  <label className="flex items-center space-x-2">
+                                    <input
+                                      type="radio"
+                                      value="link"
+                                      checked={planForm.submissionType === 'link'}
+                                      onChange={(e) => setPlanForm(prev => ({ ...prev, submissionType: e.target.value as any }))}
+                                    />
+                                    <span>Link</span>
+                                  </label>
+                                </div>
+                              </div>
+                              {planForm.submissionType === 'file' && (
+                                <div className="space-y-2">
+                                  <Label htmlFor="fileSizeLimit">File Size Limit (MB)</Label>
+                                  <Input
+                                    id="fileSizeLimit"
+                                    type="number"
+                                    min="1"
+                                    max="100"
+                                    value={planForm.fileSizeLimit}
+                                    onChange={(e) => setPlanForm(prev => ({ ...prev, fileSizeLimit: parseInt(e.target.value) }))}
+                                  />
+                                </div>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                        {error && (
+                          <Alert className="border-red-200 bg-red-50">
+                            <AlertCircle className="h-4 w-4" />
+                            <AlertDescription className="text-red-800">{error}</AlertDescription>
+                          </Alert>
+                        )}
+                        <Button type="submit" disabled={loading} className="w-full">
+                          {loading ? 'Creating...' : 'Create Activity'}
+                        </Button>
+                      </form>
+                    </DialogContent>
+                  </Dialog>
+                </div>
+
+                {/* Full Width Schedule Board with Horizontal Scrolling */}
+                <div className="w-full bg-white rounded-lg border border-gray-200 overflow-hidden">
+                  <div className="overflow-x-auto">
+                    <div style={{ minWidth: `${120 + (dateRange.length * 250)}px` }}>
+                      {/* Header with dates */}
+                      <div className="flex bg-gray-50 border-b border-gray-200">
+                        <div className="w-[120px] flex-shrink-0 font-semibold text-black p-3 text-center border-r border-gray-200">
+                          Time
+                        </div>
+                        {dateRange.map((date, index) => (
+                          <div key={index} className="w-[250px] flex-shrink-0 font-semibold text-black p-3 text-center border-r border-gray-200">
+                            <div>{date.toLocaleDateString('en-US', { weekday: 'long' })}</div>
+                            <div className="text-sm text-gray-600">{date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</div>
+                          </div>
+                        ))}
+                      </div>
+
+                      {/* Time slots with plans */}
+                      {timeSlots.map((timeSlot) => (
+                        <div key={timeSlot.time24} className="flex border-b border-gray-200">
+                          <div className="w-[120px] flex-shrink-0 p-3 bg-gray-50 font-medium text-black text-center border-r border-gray-200">
+                            {timeSlot.time12}
+                          </div>
+                          {dateRange.map((date, dateIndex) => {
+                            const plans = getPlansForDateTime(date, timeSlot.time12);
+                            return (
+                              <div key={dateIndex} className="w-[250px] flex-shrink-0 p-2 min-h-[80px] border-r border-gray-200 bg-white">
+                                {plans.map((plan) => {
+                                  // Only render the activity card in its starting time slot
+                                  if (!isStartingSlot(plan, timeSlot.time12)) return null;
+                                  
+                                  const span = getActivitySpan(plan);
+                                  const height = span * 80 - 8; // Account for padding
+                                  
+                                  return (
+                                    <div
+                                      key={plan.id}
+                                      className="mb-2 p-3 bg-blue-50 border border-blue-200 rounded-md hover:shadow-sm transition-shadow cursor-pointer group relative"
+                                      style={{ 
+                                        height: span > 1 ? `${height}px` : 'auto',
+                                        minHeight: '60px'
+                                      }}
+                                    >
+                                      <div className="flex items-start justify-between h-full">
+                                        <div className="flex-1 min-w-0">
+                                          <h4 className="text-sm font-medium text-black truncate">{plan.title}</h4>
+                                          <p className="text-xs text-gray-600 mt-1">
+                                            {plan.time} - {plan.endTime || plan.time}
+                                          </p>
+                                          {span > 1 && (
+                                            <p className="text-xs text-blue-600 mt-1 font-medium">
+                                              Duration: {span} hour{span > 1 ? 's' : ''}
+                                            </p>
+                                          )}
+                                          <div className="flex items-center space-x-1 mt-2">
+                                            <Badge variant={plan.planType === 'withSubmission' ? 'default' : 'secondary'} className="text-xs">
+                                              {plan.planType === 'withSubmission' ? 'Submission' : 'Activity'}
+                                            </Badge>
+                                          </div>
+                                          {plan.description && (
+                                            <p className="text-xs text-gray-500 mt-1 line-clamp-2">{plan.description}</p>
+                                          )}
+                                        </div>
+                                        <Button
+                                          variant="ghost"
+                                          size="sm"
+                                          onClick={() => handleDeleteEventPlan(plan.id)}
+                                          className="opacity-0 group-hover:opacity-100 transition-opacity p-1 h-auto text-red-600 hover:bg-red-50 absolute top-1 right-1"
+                                        >
+                                          <Trash2 className="h-3 w-3" />
+                                        </Button>
+                                      </div>
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </>
+            )}
+          </TabsContent>
+        </Tabs>
+
+        {/* Edit Event Dialog */}
+        <Dialog open={!!editingEvent} onOpenChange={() => setEditingEvent(null)}>
           <DialogContent className="bg-white">
             <DialogHeader>
-              <DialogTitle>Create New Event</DialogTitle>
+              <DialogTitle>Edit Event Dates</DialogTitle>
               <DialogDescription>
-                Create a new event to organize activities and plans
+                Update the start and end dates for {editingEvent?.name}
               </DialogDescription>
             </DialogHeader>
-            <form onSubmit={handleCreateEvent} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="eventName">Event Name</Label>
-                <Input
-                  id="eventName"
-                  value={eventForm.name}
-                  onChange={(e) => setEventForm(prev => ({ ...prev, name: e.target.value }))}
-                  placeholder="Enter event name"
-                />
-              </div>
+            <form onSubmit={handleEditEvent} className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="startDate">Start Date</Label>
+                  <Label htmlFor="editStartDate">Start Date</Label>
                   <Input
-                    id="startDate"
+                    id="editStartDate"
                     type="date"
-                    value={eventForm.startDate}
-                    onChange={(e) => setEventForm(prev => ({ ...prev, startDate: e.target.value }))}
+                    value={editForm.startDate}
+                    onChange={(e) => setEditForm(prev => ({ ...prev, startDate: e.target.value }))}
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="endDate">End Date</Label>
+                  <Label htmlFor="editEndDate">End Date</Label>
                   <Input
-                    id="endDate"
+                    id="editEndDate"
                     type="date"
-                    value={eventForm.endDate}
-                    onChange={(e) => setEventForm(prev => ({ ...prev, endDate: e.target.value }))}
+                    value={editForm.endDate}
+                    onChange={(e) => setEditForm(prev => ({ ...prev, endDate: e.target.value }))}
                   />
                 </div>
               </div>
-              <Button type="submit" disabled={loading} className="w-full">
-                {loading ? 'Creating...' : 'Create Event'}
-              </Button>
+              <div className="flex space-x-2">
+                <Button type="submit" disabled={loading} className="flex-1">
+                  <Save className="h-4 w-4 mr-2" />
+                  {loading ? 'Saving...' : 'Save Changes'}
+                </Button>
+                <Button type="button" variant="outline" onClick={() => setEditingEvent(null)}>
+                  Cancel
+                </Button>
+              </div>
             </form>
           </DialogContent>
         </Dialog>
       </div>
-
-      {error && (
-        <Alert className="border-red-200 bg-red-50">
-          <AlertCircle className="h-4 w-4" />
-          <AlertDescription className="text-red-800">{error}</AlertDescription>
-        </Alert>
-      )}
-
-      <Tabs defaultValue="events" className="w-full">
-        <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="events">Events</TabsTrigger>
-          <TabsTrigger value="plans" disabled={!selectedEvent}>
-            Event Plans {selectedEvent && `(${selectedEvent.name})`}
-          </TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="events" className="space-y-4">
-          <div className="grid gap-4">
-            {events.length === 0 ? (
-              <Card className="p-8 text-center">
-                <CardContent>
-                  <Calendar className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                  <h3 className="text-lg font-medium text-black mb-2">No Events Created</h3>
-                  <p className="text-gray-600">Create your first event to get started.</p>
-                </CardContent>
-              </Card>
-            ) : (
-              events.map((event) => (
-                <Card key={event.id} className="hover:shadow-md transition-shadow border">
-                  <CardHeader>
-                    <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
-                      <div className="space-y-2">
-                        <CardTitle className="text-xl text-black">{event.name}</CardTitle>
-                        <CardDescription>
-                          <div className="flex flex-wrap items-center gap-4 text-sm">
-                            <span className="flex items-center space-x-1">
-                              <Calendar className="h-4 w-4" />
-                              <span>{event.startDate.toLocaleDateString()} - {event.endDate.toLocaleDateString()}</span>
-                            </span>
-                            <Badge variant={event.isActive ? 'default' : 'secondary'}>
-                              {event.isActive ? 'Active' : 'Inactive'}
-                            </Badge>
-                          </div>
-                        </CardDescription>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => setSelectedEvent(event)}
-                        >
-                          <FileText className="h-4 w-4 mr-2" />
-                          Manage Plans
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => startEditEvent(event)}
-                          className="border-blue-200 text-blue-600 hover:bg-blue-50"
-                        >
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleDeleteEvent(event.id)}
-                          className="border-red-200 text-red-600 hover:bg-red-50"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </div>
-                  </CardHeader>
-                </Card>
-              ))
-            )}
-          </div>
-        </TabsContent>
-
-        <TabsContent value="plans" className="space-y-4">
-          {selectedEvent && (
-            <>
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                <div>
-                  <h2 className="text-xl font-semibold text-black">Plans for {selectedEvent.name}</h2>
-                  <p className="text-gray-600">Kanban view: Dates as columns, Times as rows</p>
-                </div>
-                <Dialog open={isAddTaskDialogOpen} onOpenChange={setIsAddTaskDialogOpen}>
-                  <DialogTrigger asChild>
-                    <Button className="bg-green-600 hover:bg-green-700">
-                      <Plus className="h-4 w-4 mr-2" />
-                      Add Task
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto bg-white">
-                    <DialogHeader>
-                      <DialogTitle>Create Event Plan</DialogTitle>
-                      <DialogDescription>
-                        Create a new activity plan for {selectedEvent.name}
-                      </DialogDescription>
-                    </DialogHeader>
-                    <form onSubmit={handleCreateEventPlan} className="space-y-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="planTitle">Title</Label>
-                        <Input
-                          id="planTitle"
-                          value={planForm.title}
-                          onChange={(e) => setPlanForm(prev => ({ ...prev, title: e.target.value }))}
-                          placeholder="Enter plan title"
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="planDescription">Description</Label>
-                        <Textarea
-                          id="planDescription"
-                          value={planForm.description}
-                          onChange={(e) => setPlanForm(prev => ({ ...prev, description: e.target.value }))}
-                          placeholder="Enter plan description"
-                          rows={3}
-                        />
-                      </div>
-                      <div className="grid grid-cols-3 gap-4">
-                        <div className="space-y-2">
-                          <Label htmlFor="planDate">Date</Label>
-                          <Input
-                            id="planDate"
-                            type="date"
-                            value={planForm.date}
-                            onChange={(e) => setPlanForm(prev => ({ ...prev, date: e.target.value }))}
-                            min={selectedEvent.startDate.toISOString().split('T')[0]}
-                            max={selectedEvent.endDate.toISOString().split('T')[0]}
-                          />
-                        </div>
-                        <div className="space-y-2">
-                          <Label htmlFor="planTime">Start Time</Label>
-                          <Select value={planForm.time} onValueChange={(value) => setPlanForm(prev => ({ ...prev, time: value }))}>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select time" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {timeSlots.map(slot => (
-                                <SelectItem key={slot.time24} value={slot.time12}>{slot.time12}</SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </div>
-                        <div className="space-y-2">
-                          <Label htmlFor="planEndTime">End Time</Label>
-                          <Select value={planForm.endTime} onValueChange={(value) => setPlanForm(prev => ({ ...prev, endTime: value }))}>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select end time" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {timeSlots.map(slot => (
-                                <SelectItem key={slot.time24} value={slot.time12}>{slot.time12}</SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </div>
-                      </div>
-                      <div className="space-y-4">
-                        <div className="space-y-2">
-                          <Label>Plan Type</Label>
-                          <div className="flex space-x-4">
-                            <label className="flex items-center space-x-2">
-                              <input
-                                type="radio"
-                                value="withoutSubmission"
-                                checked={planForm.planType === 'withoutSubmission'}
-                                onChange={(e) => setPlanForm(prev => ({ ...prev, planType: e.target.value as any }))}
-                              />
-                              <span>Without Submission</span>
-                            </label>
-                            <label className="flex items-center space-x-2">
-                              <input
-                                type="radio"
-                                value="withSubmission"
-                                checked={planForm.planType === 'withSubmission'}
-                                onChange={(e) => setPlanForm(prev => ({ ...prev, planType: e.target.value as any }))}
-                              />
-                              <span>With Submission</span>
-                            </label>
-                          </div>
-                        </div>
-                        {planForm.planType === 'withSubmission' && (
-                          <div className="space-y-4 p-4 bg-gray-50 rounded-lg">
-                            <div className="space-y-2">
-                              <Label>Submission Type</Label>
-                              <div className="flex space-x-4">
-                                <label className="flex items-center space-x-2">
-                                  <input
-                                    type="radio"
-                                    value="file"
-                                    checked={planForm.submissionType === 'file'}
-                                    onChange={(e) => setPlanForm(prev => ({ ...prev, submissionType: e.target.value as any }))}
-                                  />
-                                  <span>File Upload</span>
-                                </label>
-                                <label className="flex items-center space-x-2">
-                                  <input
-                                    type="radio"
-                                    value="text"
-                                    checked={planForm.submissionType === 'text'}
-                                    onChange={(e) => setPlanForm(prev => ({ ...prev, submissionType: e.target.value as any }))}
-                                  />
-                                  <span>Text Response</span>
-                                </label>
-                                <label className="flex items-center space-x-2">
-                                  <input
-                                    type="radio"
-                                    value="link"
-                                    checked={planForm.submissionType === 'link'}
-                                    onChange={(e) => setPlanForm(prev => ({ ...prev, submissionType: e.target.value as any }))}
-                                  />
-                                  <span>Link</span>
-                                </label>
-                              </div>
-                            </div>
-                            {planForm.submissionType === 'file' && (
-                              <div className="space-y-2">
-                                <Label htmlFor="fileSizeLimit">File Size Limit (MB)</Label>
-                                <Input
-                                  id="fileSizeLimit"
-                                  type="number"
-                                  min="1"
-                                  max="100"
-                                  value={planForm.fileSizeLimit}
-                                  onChange={(e) => setPlanForm(prev => ({ ...prev, fileSizeLimit: parseInt(e.target.value) }))}
-                                />
-                              </div>
-                            )}
-                          </div>
-                        )}
-                      </div>
-                      {error && (
-                        <Alert className="border-red-200 bg-red-50">
-                          <AlertCircle className="h-4 w-4" />
-                          <AlertDescription className="text-red-800">{error}</AlertDescription>
-                        </Alert>
-                      )}
-                      <Button type="submit" disabled={loading} className="w-full">
-                        {loading ? 'Creating...' : 'Create Plan'}
-                      </Button>
-                    </form>
-                  </DialogContent>
-                </Dialog>
-              </div>
-
-              {/* Kanban Board with Horizontal Scrolling */}
-              <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
-                <div className="overflow-x-auto">
-                  <div style={{ minWidth: `${120 + (dateRange.length * 200)}px` }}>
-                    {/* Header with dates */}
-                    <div className="flex bg-gray-50 border-b border-gray-200">
-                      <div className="w-[120px] flex-shrink-0 font-semibold text-black p-3 text-center border-r border-gray-200">
-                        Time
-                      </div>
-                      {dateRange.map((date, index) => (
-                        <div key={index} className="w-[200px] flex-shrink-0 font-semibold text-black p-3 text-center border-r border-gray-200">
-                          <div>{date.toLocaleDateString('en-US', { weekday: 'short' })}</div>
-                          <div className="text-sm text-gray-600">{date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</div>
-                        </div>
-                      ))}
-                    </div>
-
-                    {/* Time slots with plans */}
-                    {timeSlots.map((timeSlot) => (
-                      <div key={timeSlot.time24} className="flex border-b border-gray-200">
-                        <div className="w-[120px] flex-shrink-0 p-3 bg-gray-50 font-medium text-black text-center border-r border-gray-200">
-                          {timeSlot.time12}
-                        </div>
-                        {dateRange.map((date, dateIndex) => {
-                          const plans = getPlansForDateTime(date, timeSlot.time12);
-                          return (
-                            <div key={dateIndex} className="w-[200px] flex-shrink-0 p-2 min-h-[80px] border-r border-gray-200 bg-white">
-                              {plans.map((plan) => (
-                                <div
-                                  key={plan.id}
-                                  className="mb-2 p-2 bg-blue-50 border border-blue-200 rounded-md hover:shadow-sm transition-shadow cursor-pointer group"
-                                >
-                                  <div className="flex items-start justify-between">
-                                    <div className="flex-1 min-w-0">
-                                      <h4 className="text-sm font-medium text-black truncate">{plan.title}</h4>
-                                      <p className="text-xs text-gray-600 mt-1">{plan.time} - {plan.endTime}</p>
-                                      <div className="flex items-center space-x-1 mt-1">
-                                        <Badge variant={plan.planType === 'withSubmission' ? 'default' : 'secondary'} className="text-xs">
-                                          {plan.planType === 'withSubmission' ? 'Submission' : 'Activity'}
-                                        </Badge>
-                                      </div>
-                                    </div>
-                                    <Button
-                                      variant="ghost"
-                                      size="sm"
-                                      onClick={() => handleDeleteEventPlan(plan.id)}
-                                      className="opacity-0 group-hover:opacity-100 transition-opacity p-1 h-auto text-red-600 hover:bg-red-50"
-                                    >
-                                      <Trash2 className="h-3 w-3" />
-                                    </Button>
-                                  </div>
-                                </div>
-                              ))}
-                            </div>
-                          );
-                        })}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            </>
-          )}
-        </TabsContent>
-      </Tabs>
-
-      {/* Edit Event Dialog */}
-      <Dialog open={!!editingEvent} onOpenChange={() => setEditingEvent(null)}>
-        <DialogContent className="bg-white">
-          <DialogHeader>
-            <DialogTitle>Edit Event Dates</DialogTitle>
-            <DialogDescription>
-              Update the start and end dates for {editingEvent?.name}
-            </DialogDescription>
-          </DialogHeader>
-          <form onSubmit={handleEditEvent} className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="editStartDate">Start Date</Label>
-                <Input
-                  id="editStartDate"
-                  type="date"
-                  value={editForm.startDate}
-                  onChange={(e) => setEditForm(prev => ({ ...prev, startDate: e.target.value }))}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="editEndDate">End Date</Label>
-                <Input
-                  id="editEndDate"
-                  type="date"
-                  value={editForm.endDate}
-                  onChange={(e) => setEditForm(prev => ({ ...prev, endDate: e.target.value }))}
-                />
-              </div>
-            </div>
-            <div className="flex space-x-2">
-              <Button type="submit" disabled={loading} className="flex-1">
-                <Save className="h-4 w-4 mr-2" />
-                {loading ? 'Saving...' : 'Save Changes'}
-              </Button>
-              <Button type="button" variant="outline" onClick={() => setEditingEvent(null)}>
-                Cancel
-              </Button>
-            </div>
-          </form>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 };
