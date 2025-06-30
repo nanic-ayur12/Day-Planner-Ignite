@@ -64,6 +64,7 @@ export default function LoginPage() {
       toast({
         title: "Login Successful!",
         description: "Welcome to your student dashboard",
+        variant: "success",
       });
       // Reset attempt count on successful login
       setAttemptCount(0);
@@ -82,7 +83,7 @@ export default function LoginPage() {
         toast({
           title: "Multiple Failed Attempts",
           description: "Please double-check your credentials to avoid temporary lockout.",
-          variant: "destructive",
+          variant: "warning",
         });
       }
     } finally {
@@ -111,6 +112,7 @@ export default function LoginPage() {
       toast({
         title: "Login Successful!",
         description: "Welcome to your admin dashboard",
+        variant: "success",
       });
       // Reset attempt count on successful login
       setAttemptCount(0);
@@ -129,7 +131,7 @@ export default function LoginPage() {
         toast({
           title: "Multiple Failed Attempts",
           description: "Please double-check your credentials to avoid temporary lockout.",
-          variant: "destructive",
+          variant: "warning",
         });
       }
     } finally {

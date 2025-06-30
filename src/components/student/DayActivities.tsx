@@ -212,6 +212,7 @@ export const DayActivities: React.FC = () => {
       toast({
         title: "Success!",
         description: "File uploaded and submitted successfully",
+        variant: "success",
       });
 
       fetchUserSubmissions();
@@ -261,6 +262,7 @@ export const DayActivities: React.FC = () => {
       toast({
         title: "Success!",
         description: "Text submission saved successfully",
+        variant: "success",
       });
 
       fetchUserSubmissions();
@@ -305,6 +307,7 @@ export const DayActivities: React.FC = () => {
       toast({
         title: "Success!",
         description: "Link submission saved successfully",
+        variant: "success",
       });
 
       fetchUserSubmissions();
