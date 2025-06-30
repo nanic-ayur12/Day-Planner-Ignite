@@ -3,7 +3,7 @@ import * as React from 'react';
 import type { ToastActionElement, ToastProps } from '@/components/ui/toast';
 
 const TOAST_LIMIT = 1;
-const TOAST_REMOVE_DELAY = 5000; // Changed to 2 seconds
+const TOAST_REMOVE_DELAY = 4000; // Increased to 4 seconds for better UX
 
 type ToasterToast = ToastProps & {
   id: string;
@@ -88,8 +88,6 @@ export const reducer = (state: State, action: Action): State => {
     case 'DISMISS_TOAST': {
       const { toastId } = action;
 
-      // ! Side effects ! - This could be extracted into a dismissToast() action,
-      // but I'll keep it here for simplicity
       if (toastId) {
         addToRemoveQueue(toastId);
       } else {
@@ -160,10 +158,10 @@ function toast({ variant = 'default', ...props }: Toast) {
     },
   });
 
-  // Auto-dismiss after 2 seconds for all toasts
+  // Auto-dismiss after specified time
   setTimeout(() => {
     dismiss();
-  }, 2000);
+  }, TOAST_REMOVE_DELAY);
 
   return {
     id: id,

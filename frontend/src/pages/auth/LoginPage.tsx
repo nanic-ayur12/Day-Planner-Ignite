@@ -50,7 +50,6 @@ export default function LoginPage() {
       return;
     }
 
-    // Prevent further attempts if rate limited
     if (rateLimited) {
       setError('Please wait a few minutes before attempting to login again.');
       return;
@@ -62,11 +61,10 @@ export default function LoginPage() {
     try {
       await login(studentCredentials.rollNumber, studentCredentials.password, true);
       toast({
-        title: "Login Successful!",
-        description: "Welcome to your student dashboard",
+        title: "Welcome back!",
+        description: "Successfully logged into your student dashboard",
         variant: "success",
       });
-      // Reset attempt count on successful login
       setAttemptCount(0);
       setRateLimited(false);
       navigate('/student');
@@ -78,11 +76,10 @@ export default function LoginPage() {
       const errorMessage = getErrorMessage(error);
       setError(errorMessage);
       
-      // Show warning after 3 failed attempts
       if (newAttemptCount >= 3 && !rateLimited) {
         toast({
-          title: "Multiple Failed Attempts",
-          description: "Please double-check your credentials to avoid temporary lockout.",
+          title: "Security Notice",
+          description: "Multiple failed attempts detected. Please verify your credentials.",
           variant: "warning",
         });
       }
@@ -98,7 +95,6 @@ export default function LoginPage() {
       return;
     }
 
-    // Prevent further attempts if rate limited
     if (rateLimited) {
       setError('Please wait a few minutes before attempting to login again.');
       return;
@@ -110,11 +106,10 @@ export default function LoginPage() {
     try {
       await login(adminCredentials.email, adminCredentials.password, false);
       toast({
-        title: "Login Successful!",
-        description: "Welcome to your admin dashboard",
+        title: "Admin Access Granted",
+        description: "Welcome to the administrative dashboard",
         variant: "success",
       });
-      // Reset attempt count on successful login
       setAttemptCount(0);
       setRateLimited(false);
       navigate('/admin');
@@ -126,11 +121,10 @@ export default function LoginPage() {
       const errorMessage = getErrorMessage(error);
       setError(errorMessage);
       
-      // Show warning after 3 failed attempts
       if (newAttemptCount >= 3 && !rateLimited) {
         toast({
-          title: "Multiple Failed Attempts",
-          description: "Please double-check your credentials to avoid temporary lockout.",
+          title: "Security Alert",
+          description: "Multiple failed admin login attempts detected.",
           variant: "warning",
         });
       }
@@ -140,98 +134,110 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex">
-      {/* Left side - Branding */}
-      <div className="hidden lg:flex lg:w-1/2 bg-white items-center justify-center p-12 relative overflow-hidden">
-        <div className="absolute inset-0 bg-blue-50 opacity-30"></div>
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 flex">
+      {/* Left side - Enhanced Branding */}
+      <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-blue-600 via-indigo-700 to-purple-800 items-center justify-center p-12 relative overflow-hidden">
+        <div className="absolute inset-0 bg-black/10"></div>
+        <div className="absolute top-0 left-0 w-full h-full">
+          <div className="absolute top-20 left-20 w-32 h-32 bg-white/10 rounded-full blur-xl"></div>
+          <div className="absolute bottom-20 right-20 w-48 h-48 bg-white/5 rounded-full blur-2xl"></div>
+          <div className="absolute top-1/2 left-1/4 w-24 h-24 bg-white/10 rounded-full blur-lg"></div>
+        </div>
+        
         <div className="relative z-10 max-w-lg text-center space-y-8">
           <div className="flex items-center justify-center">
-            <div className="p-6 bg-white rounded-2xl shadow-lg border border-gray-100">
-              <Activity className="h-16 w-16 text-blue-600" />
+            <div className="p-8 bg-white/20 backdrop-blur-sm rounded-3xl shadow-2xl border border-white/20">
+              <Activity className="h-20 w-20 text-white" />
             </div>
           </div>
-          <div className="space-y-4">
-            <h1 className="text-5xl font-bold text-black leading-tight">
-              Student Ignite Portal
+          <div className="space-y-6">
+            <h1 className="text-6xl font-bold text-white leading-tight">
+              Ignite
+              <span className="block text-4xl font-light text-blue-100">Student Portal</span>
             </h1>
-            <div className="space-y-2">
-              <p className="text-xl text-blue-600 font-semibold">Kumaraguru Institutions</p>
-              <p className="text-lg text-gray-600 leading-relaxed">
-                Streamlined Student Access System
+            <div className="space-y-3">
+              <p className="text-2xl text-blue-100 font-medium">Kumaraguru Institutions</p>
+              <p className="text-lg text-blue-200 leading-relaxed max-w-md mx-auto">
+                Empowering education through seamless digital experiences
               </p>
             </div>
           </div>
           <div className="pt-8">
-            <div className="inline-flex items-center space-x-2 bg-white px-4 py-2 rounded-full shadow-sm border border-gray-200">
-              <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-              <span className="text-sm text-gray-600 font-medium">Secured with Firebase</span>
+            <div className="inline-flex items-center space-x-3 bg-white/10 backdrop-blur-sm px-6 py-3 rounded-full border border-white/20">
+              <div className="w-3 h-3 bg-green-400 rounded-full animate-pulse"></div>
+              <span className="text-sm text-white font-medium">Secure & Reliable Platform</span>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Right side - Login Form */}
+      {/* Right side - Enhanced Login Form */}
       <div className="w-full lg:w-1/2 flex items-center justify-center p-6 lg:p-12">
         <div className="w-full max-w-md space-y-8">
           {/* Mobile Header */}
           <div className="lg:hidden text-center space-y-4">
             <div className="flex items-center justify-center">
-              <div className="p-4 bg-white rounded-2xl shadow-lg border border-gray-100">
-                <Activity className="h-10 w-10 text-blue-600" />
+              <div className="p-6 bg-gradient-to-br from-blue-600 to-indigo-700 rounded-3xl shadow-xl">
+                <Activity className="h-12 w-12 text-white" />
               </div>
             </div>
             <div>
-              <h1 className="text-3xl font-bold text-black">Student Ignite Portal</h1>
+              <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-indigo-700 bg-clip-text text-transparent">
+                Ignite Portal
+              </h1>
               <p className="text-blue-600 font-medium">Kumaraguru Institutions</p>
             </div>
           </div>
 
-          <div className="text-center space-y-2">
-            <h2 className="text-3xl font-bold text-black">Welcome !!</h2>
-            <p className="text-gray-600">Please sign in to your account</p>
+          <div className="text-center space-y-3">
+            <h2 className="text-3xl font-bold text-gray-900">Welcome Back</h2>
+            <p className="text-gray-600">Sign in to access your dashboard</p>
           </div>
 
-          {/* Rate limit warning */}
+          {/* Enhanced Rate limit warning */}
           {rateLimited && (
-            <Alert className="border-amber-200 bg-amber-50 rounded-lg">
-              <AlertTriangle className="h-4 w-4 text-amber-600" />
-              <AlertDescription className="text-amber-700 text-sm font-medium">
-                Account temporarily locked due to multiple failed attempts. Please wait 5-10 minutes before trying again.
+            <Alert className="border-amber-200 bg-gradient-to-r from-amber-50 to-orange-50 rounded-xl shadow-lg">
+              <AlertTriangle className="h-5 w-5 text-amber-600" />
+              <AlertDescription className="text-amber-800 font-medium">
+                <div className="space-y-1">
+                  <p className="font-semibold">Account Temporarily Locked</p>
+                  <p className="text-sm">Multiple failed attempts detected. Please wait 5-10 minutes before trying again.</p>
+                </div>
               </AlertDescription>
             </Alert>
           )}
 
-          <Card className="border-0 shadow-xl bg-white">
-            <CardHeader className="space-y-1 text-center pb-6">
-              <CardTitle className="text-xl font-semibold text-black">Account Access</CardTitle>
-              <CardDescription className="text-gray-500">
-                Select your role to continue
+          <Card className="border-0 shadow-2xl bg-white/80 backdrop-blur-sm">
+            <CardHeader className="space-y-2 text-center pb-8">
+              <CardTitle className="text-2xl font-bold text-gray-900">Account Access</CardTitle>
+              <CardDescription className="text-gray-600">
+                Choose your role to continue
               </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-6">
+            <CardContent className="space-y-8">
               <Tabs defaultValue="student" className="w-full">
-                <TabsList className="grid w-full grid-cols-2 bg-gray-50 p-1 rounded-lg h-12">
+                <TabsList className="grid w-full grid-cols-2 bg-gray-50 p-1.5 rounded-xl h-14 shadow-inner">
                   <TabsTrigger 
                     value="student" 
-                    className="flex items-center justify-center space-x-2 data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:border data-[state=active]:border-gray-200 rounded-md transition-all h-10 focus:outline-none focus:ring-0 focus-visible:ring-0"
+                    className="flex items-center justify-center space-x-3 data-[state=active]:bg-white data-[state=active]:shadow-lg data-[state=active]:border data-[state=active]:border-gray-200 rounded-lg transition-all h-11 focus:outline-none focus:ring-0 focus-visible:ring-0"
                   >
-                    <GraduationCap className="h-4 w-4" />
-                    <span className="font-medium text-black">Student</span>
+                    <GraduationCap className="h-5 w-5" />
+                    <span className="font-semibold text-gray-900">Student</span>
                   </TabsTrigger>
                   <TabsTrigger 
                     value="admin" 
-                    className="flex items-center justify-center space-x-2 data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:border data-[state=active]:border-gray-200 rounded-md transition-all h-10 focus:outline-none focus:ring-0 focus-visible:ring-0"
+                    className="flex items-center justify-center space-x-3 data-[state=active]:bg-white data-[state=active]:shadow-lg data-[state=active]:border data-[state=active]:border-gray-200 rounded-lg transition-all h-11 focus:outline-none focus:ring-0 focus-visible:ring-0"
                   >
-                    <Shield className="h-4 w-4" />
-                    <span className="font-medium text-black">Admin</span>
+                    <Shield className="h-5 w-5" />
+                    <span className="font-semibold text-gray-900">Admin</span>
                   </TabsTrigger>
                 </TabsList>
 
-                <TabsContent value="student" className="mt-6">
+                <TabsContent value="student" className="mt-8">
                   <form onSubmit={handleStudentLogin} className="space-y-6">
-                    <div className="space-y-4">
+                    <div className="space-y-5">
                       <div className="space-y-2">
-                        <Label htmlFor="rollNumber" className="text-sm font-medium text-black">
+                        <Label htmlFor="rollNumber" className="text-sm font-semibold text-gray-700">
                           Roll Number
                         </Label>
                         <Input
@@ -240,12 +246,12 @@ export default function LoginPage() {
                           placeholder="Enter your roll number"
                           value={studentCredentials.rollNumber}
                           onChange={(e) => setStudentCredentials(prev => ({ ...prev, rollNumber: e.target.value }))}
-                          className="h-12 border-gray-200 focus:border-blue-500 focus:ring-0 focus-visible:ring-0 rounded-lg text-sm"
+                          className="h-12 border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 rounded-xl text-sm shadow-sm"
                           disabled={rateLimited}
                         />
                       </div>
                       <div className="space-y-2">
-                        <Label htmlFor="studentPassword" className="text-sm font-medium text-black">
+                        <Label htmlFor="studentPassword" className="text-sm font-semibold text-gray-700">
                           Password
                         </Label>
                         <Input
@@ -254,33 +260,33 @@ export default function LoginPage() {
                           placeholder="Enter your password"
                           value={studentCredentials.password}
                           onChange={(e) => setStudentCredentials(prev => ({ ...prev, password: e.target.value }))}
-                          className="h-12 border-gray-200 focus:border-blue-500 focus:ring-0 focus-visible:ring-0 rounded-lg text-sm"
+                          className="h-12 border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 rounded-xl text-sm shadow-sm"
                           disabled={rateLimited}
                         />
                       </div>
                     </div>
 
-                    <div className="space-y-3">
+                    <div className="space-y-4">
                       <Button 
                         type="submit"
-                        className="w-full h-12 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-all duration-200 shadow-lg hover:shadow-xl group focus:outline-none focus:ring-0 focus-visible:ring-0 disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="w-full h-14 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-xl font-semibold text-base transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 group focus:outline-none focus:ring-0 focus-visible:ring-0 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
                         disabled={loading || rateLimited}
                       >
                         {loading ? (
                           <>
-                            <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                            <Loader2 className="h-5 w-5 animate-spin mr-3" />
                             Signing in...
                           </>
                         ) : rateLimited ? (
                           <>
-                            <AlertTriangle className="h-4 w-4 mr-2" />
-                            Please wait...
+                            <AlertTriangle className="h-5 w-5 mr-3" />
+                            Account Locked
                           </>
                         ) : (
                           <>
-                            <GraduationCap className="h-4 w-4 mr-2" />
+                            <GraduationCap className="h-5 w-5 mr-3" />
                             Sign in as Student
-                            <ArrowRight className="h-4 w-4 ml-2 group-hover:translate-x-1 transition-transform" />
+                            <ArrowRight className="h-5 w-5 ml-3 group-hover:translate-x-1 transition-transform" />
                           </>
                         )}
                       </Button>
@@ -288,11 +294,11 @@ export default function LoginPage() {
                   </form>
                 </TabsContent>
 
-                <TabsContent value="admin" className="mt-6">
+                <TabsContent value="admin" className="mt-8">
                   <form onSubmit={handleAdminLogin} className="space-y-6">
-                    <div className="space-y-4">
+                    <div className="space-y-5">
                       <div className="space-y-2">
-                        <Label htmlFor="email" className="text-sm font-medium text-black">
+                        <Label htmlFor="email" className="text-sm font-semibold text-gray-700">
                           Email Address
                         </Label>
                         <Input
@@ -301,12 +307,12 @@ export default function LoginPage() {
                           placeholder="Enter your email"
                           value={adminCredentials.email}
                           onChange={(e) => setAdminCredentials(prev => ({ ...prev, email: e.target.value }))}
-                          className="h-12 border-gray-200 focus:border-green-500 focus:ring-0 focus-visible:ring-0 rounded-lg text-sm"
+                          className="h-12 border-gray-200 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 rounded-xl text-sm shadow-sm"
                           disabled={rateLimited}
                         />
                       </div>
                       <div className="space-y-2">
-                        <Label htmlFor="adminPassword" className="text-sm font-medium text-black">
+                        <Label htmlFor="adminPassword" className="text-sm font-semibold text-gray-700">
                           Password
                         </Label>
                         <Input
@@ -315,33 +321,33 @@ export default function LoginPage() {
                           placeholder="Enter your password"
                           value={adminCredentials.password}
                           onChange={(e) => setAdminCredentials(prev => ({ ...prev, password: e.target.value }))}
-                          className="h-12 border-gray-200 focus:border-green-500 focus:ring-0 focus-visible:ring-0 rounded-lg text-sm"
+                          className="h-12 border-gray-200 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 rounded-xl text-sm shadow-sm"
                           disabled={rateLimited}
                         />
                       </div>
                     </div>
 
-                    <div className="space-y-3">
+                    <div className="space-y-4">
                       <Button 
                         type="submit"
-                        className="w-full h-12 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium transition-all duration-200 shadow-lg hover:shadow-xl group focus:outline-none focus:ring-0 focus-visible:ring-0 disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="w-full h-14 bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-700 hover:to-green-700 text-white rounded-xl font-semibold text-base transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 group focus:outline-none focus:ring-0 focus-visible:ring-0 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
                         disabled={loading || rateLimited}
                       >
                         {loading ? (
                           <>
-                            <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                            <Loader2 className="h-5 w-5 animate-spin mr-3" />
                             Signing in...
                           </>
                         ) : rateLimited ? (
                           <>
-                            <AlertTriangle className="h-4 w-4 mr-2" />
-                            Please wait...
+                            <AlertTriangle className="h-5 w-5 mr-3" />
+                            Account Locked
                           </>
                         ) : (
                           <>
-                            <Shield className="h-4 w-4 mr-2" />
+                            <Shield className="h-5 w-5 mr-3" />
                             Sign in as Admin
-                            <ArrowRight className="h-4 w-4 ml-2 group-hover:translate-x-1 transition-transform" />
+                            <ArrowRight className="h-5 w-5 ml-3 group-hover:translate-x-1 transition-transform" />
                           </>
                         )}
                       </Button>
@@ -351,29 +357,37 @@ export default function LoginPage() {
               </Tabs>
 
               {error && (
-                <Alert className={`rounded-lg ${rateLimited ? 'border-amber-200 bg-amber-50' : 'border-red-200 bg-red-50'}`}>
-                  {rateLimited && <AlertTriangle className="h-4 w-4 text-amber-600" />}
-                  <AlertDescription className={`text-sm font-medium ${rateLimited ? 'text-amber-700' : 'text-red-700'}`}>
+                <Alert className={`rounded-xl shadow-lg ${rateLimited ? 'border-amber-200 bg-gradient-to-r from-amber-50 to-orange-50' : 'border-red-200 bg-gradient-to-r from-red-50 to-rose-50'}`}>
+                  {rateLimited && <AlertTriangle className="h-5 w-5 text-amber-600" />}
+                  <AlertDescription className={`font-medium ${rateLimited ? 'text-amber-800' : 'text-red-800'}`}>
                     {error}
                   </AlertDescription>
                 </Alert>
               )}
 
               {attemptCount >= 2 && !rateLimited && (
-                <Alert className="border-yellow-200 bg-yellow-50 rounded-lg">
-                  <AlertTriangle className="h-4 w-4 text-yellow-600" />
-                  <AlertDescription className="text-yellow-700 text-sm">
-                    {attemptCount === 2 ? 'One more failed attempt may temporarily lock your account.' : 
-                     'Multiple failed attempts detected. Please verify your credentials carefully.'}
+                <Alert className="border-yellow-200 bg-gradient-to-r from-yellow-50 to-amber-50 rounded-xl shadow-lg">
+                  <AlertTriangle className="h-5 w-5 text-yellow-600" />
+                  <AlertDescription className="text-yellow-800 font-medium">
+                    <div className="space-y-1">
+                      <p className="font-semibold">Security Warning</p>
+                      <p className="text-sm">
+                        {attemptCount === 2 ? 'One more failed attempt may temporarily lock your account.' : 
+                         'Multiple failed attempts detected. Please verify your credentials carefully.'}
+                      </p>
+                    </div>
                   </AlertDescription>
                 </Alert>
               )}
             </CardContent>
           </Card>
 
-          <div className="text-center">
+          <div className="text-center space-y-2">
             <p className="text-xs text-gray-500">
               © 2025 Kumaraguru Institutions. All rights reserved.
+            </p>
+            <p className="text-xs text-gray-400">
+              Secured with enterprise-grade encryption
             </p>
           </div>
         </div>

@@ -32,8 +32,8 @@ export const StudentLayout: React.FC = () => {
     const hasShownToast = sessionStorage.getItem('studentLoginToastShown');
     if (!hasShownToast) {
       toast({
-        title: "Login Successful!",
-        description: "Welcome to student dashboard",
+        title: "Welcome Back!",
+        description: "Successfully logged into student dashboard",
         variant: "success",
       });
       sessionStorage.setItem('studentLoginToastShown', 'true');
@@ -44,6 +44,11 @@ export const StudentLayout: React.FC = () => {
     try {
       await logout();
       sessionStorage.removeItem('studentLoginToastShown');
+      toast({
+        title: "Logged Out",
+        description: "You have been successfully logged out",
+        variant: "success",
+      });
       navigate('/login');
     } catch (error) {
       console.error('Logout error:', error);
@@ -53,21 +58,21 @@ export const StudentLayout: React.FC = () => {
   const currentPage = navigationItems.find(item => item.path === location.pathname);
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="bg-white border-b border-gray-200 sticky top-0 z-50 shadow-sm">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100">
+      {/* Enhanced Header */}
+      <header className="bg-white/80 backdrop-blur-xl border-b border-gray-200/50 sticky top-0 z-50 shadow-lg">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-20">
             {/* Logo and Title */}
             <div className="flex items-center space-x-4">
-              <div className="p-2 bg-blue-600 rounded-xl">
-                <Activity className="h-6 w-6 text-white" />
+              <div className="p-3 bg-gradient-to-br from-blue-600 to-indigo-700 rounded-2xl shadow-lg">
+                <Activity className="h-7 w-7 text-white" />
               </div>
               <div className="hidden sm:block">
-                <h1 className="text-xl font-bold text-black">
+                <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-indigo-700 bg-clip-text text-transparent">
                   Ignite Portal
                 </h1>
-                <p className="text-xs text-gray-600">Student </p>
+                <p className="text-xs text-gray-600">Student Dashboard</p>
               </div>
             </div>
 
@@ -79,10 +84,10 @@ export const StudentLayout: React.FC = () => {
                   variant="ghost"
                   size="sm"
                   onClick={() => navigate(item.path)}
-                  className={`flex items-center space-x-2 h-12 px-4 rounded-xl transition-all duration-200 focus:outline-none focus:ring-0 focus-visible:ring-0 ${
+                  className={`flex items-center space-x-3 h-12 px-6 rounded-xl transition-all duration-200 focus:outline-none focus:ring-0 focus-visible:ring-0 ${
                     location.pathname === item.path 
-                      ? 'bg-blue-50 text-blue-700 border border-blue-200' 
-                      : 'text-black hover:bg-gray-100 hover:text-black'
+                      ? 'bg-gradient-to-r from-blue-50 to-indigo-50 text-blue-700 border border-blue-200 shadow-md' 
+                      : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900'
                   }`}
                 >
                   <item.icon className={`h-5 w-5 ${location.pathname === item.path ? 'text-blue-600' : item.color}`} />
@@ -98,14 +103,14 @@ export const StudentLayout: React.FC = () => {
                 variant="ghost"
                 size="sm"
                 onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                className="md:hidden rounded-lg focus:outline-none focus:ring-0 focus-visible:ring-0"
+                className="md:hidden rounded-xl focus:outline-none focus:ring-0 focus-visible:ring-0"
               >
                 {mobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
               </Button>
 
               {/* Live Time Display */}
               <div className="hidden sm:block text-right">
-                <p className="text-sm font-semibold text-black">
+                <p className="text-sm font-semibold text-gray-900">
                   {new Date().toLocaleTimeString('en-US', { 
                     hour: '2-digit', 
                     minute: '2-digit',
@@ -118,14 +123,14 @@ export const StudentLayout: React.FC = () => {
               {/* User info and menu */}
               <div className="flex items-center space-x-3">
                 <div className="text-right hidden sm:block">
-                  <p className="text-sm font-semibold text-black">{userProfile?.name}</p>
+                  <p className="text-sm font-semibold text-gray-900">{userProfile?.name}</p>
                   <p className="text-xs text-gray-500">{userProfile?.brigadeName}</p>
                 </div>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button variant="ghost" className="h-12 w-12 rounded-xl focus:outline-none focus:ring-0 focus-visible:ring-0">
                       <Avatar className="h-10 w-10">
-                        <AvatarFallback className="bg-blue-600 text-white text-sm font-semibold">
+                        <AvatarFallback className="bg-gradient-to-br from-blue-500 to-indigo-600 text-white text-sm font-semibold">
                           {userProfile?.name?.charAt(0)?.toUpperCase() || 'S'}
                         </AvatarFallback>
                       </Avatar>
@@ -133,12 +138,12 @@ export const StudentLayout: React.FC = () => {
                   </DropdownMenuTrigger>
                   <DropdownMenuContent className="w-64" align="end">
                     <DropdownMenuLabel className="font-normal">
-                      <div className="flex flex-col space-y-1">
-                        <p className="text-sm font-semibold text-black">{userProfile?.name}</p>
+                      <div className="flex flex-col space-y-2">
+                        <p className="text-sm font-semibold text-gray-900">{userProfile?.name}</p>
                         <p className="text-xs text-gray-600">Roll: {userProfile?.rollNumber}</p>
                         <p className="text-xs text-gray-600">Brigade: {userProfile?.brigadeName}</p>
                         <div className="flex items-center space-x-2 mt-2">
-                          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gradient-to-r from-blue-100 to-indigo-100 text-blue-800">
                             Student
                           </span>
                         </div>
@@ -157,7 +162,7 @@ export const StudentLayout: React.FC = () => {
 
           {/* Mobile Navigation */}
           {mobileMenuOpen && (
-            <div className="md:hidden border-t border-gray-200 py-4">
+            <div className="md:hidden border-t border-gray-200/50 py-4">
               <nav className="space-y-2">
                 {navigationItems.map((item) => (
                   <Button
@@ -165,8 +170,8 @@ export const StudentLayout: React.FC = () => {
                     variant="ghost"
                     className={`w-full justify-start h-12 rounded-xl focus:outline-none focus:ring-0 focus-visible:ring-0 ${
                       location.pathname === item.path 
-                        ? 'bg-blue-50 text-blue-700 border border-blue-200' 
-                        : 'text-black hover:bg-gray-100 hover:text-black'
+                        ? 'bg-gradient-to-r from-blue-50 to-indigo-50 text-blue-700 border border-blue-200' 
+                        : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900'
                     }`}
                     onClick={() => {
                       navigate(item.path);
@@ -183,15 +188,15 @@ export const StudentLayout: React.FC = () => {
         </div>
       </header>
 
-      {/* Page Title */}
-      <div className="bg-white border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+      {/* Enhanced Page Title */}
+      <div className="bg-white/60 backdrop-blur-sm border-b border-gray-200/50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
-              <h2 className="text-2xl font-bold text-black">
+              <h2 className="text-3xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent">
                 {currentPage?.label || 'Student Portal'}
               </h2>
-              <p className="text-sm text-gray-500 mt-1">
+              <p className="text-sm text-gray-500 mt-2">
                 {new Date().toLocaleDateString('en-US', { 
                   weekday: 'long', 
                   year: 'numeric', 
@@ -200,7 +205,6 @@ export const StudentLayout: React.FC = () => {
                 })}
               </p>
             </div>
-
           </div>
         </div>
       </div>

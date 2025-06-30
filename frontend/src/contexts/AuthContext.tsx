@@ -1,20 +1,9 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { authAPI } from '@/lib/api';
-
-interface User {
-  id: string;
-  email?: string;
-  rollNumber?: string;
-  name: string;
-  role: 'ADMIN' | 'STUDENT';
-  brigadeId?: string;
-  brigadeName?: string;
-  isActive: boolean;
-}
+import { authAPI, type LoginRequest, type UserProfile } from '@/api/auth';
 
 interface AuthContextType {
-  currentUser: User | null;
-  userProfile: User | null;
+  currentUser: UserProfile | null;
+  userProfile: UserProfile | null;
   login: (identifier: string, password: string, isStudent?: boolean) => Promise<void>;
   logout: () => Promise<void>;
   loading: boolean;
@@ -31,20 +20,27 @@ export const useAuth = () => {
 };
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [currentUser, setCurrentUser] = useState<User | null>(null);
-  const [userProfile, setUserProfile] = useState<User | null>(null);
+  const [currentUser, setCurrentUser] = useState<UserProfile | null>(null);
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
 
   const login = async (identifier: string, password: string, isStudent = false) => {
     try {
-      const response = await authAPI.login({ identifier, password, isStudent });
+      const loginData: LoginRequest = { identifier, password, isStudent };
+      const response = await authAPI.login(loginData);
       const { token, user } = response.data;
       
       localStorage.setItem('token', token);
       localStorage.setItem('user', JSON.stringify(user));
       
-      setCurrentUser(user);
-      setUserProfile(user);
+      // Convert user to UserProfile format
+      const userProfile: UserProfile = {
+        ...user,
+        createdAt: new Date().toISOString(), // This will be updated when we fetch the profile
+      };
+      
+      setCurrentUser(userProfile);
+      setUserProfile(userProfile);
     } catch (error: any) {
       throw new Error(error.response?.data?.error || 'Login failed');
     }
@@ -69,9 +65,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const storedUser = localStorage.getItem('user');
       
       if (token && storedUser) {
-        const user = JSON.parse(storedUser);
-        
-        // Verify token is still valid
         try {
           const response = await authAPI.getProfile();
           const freshUser = response.data;

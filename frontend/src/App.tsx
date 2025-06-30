@@ -1,15 +1,16 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from '@/contexts/AuthContext';
 import { ProtectedRoute } from '@/components/shared/ProtectedRoute';
-import LoginPage from '@/components/auth/LoginPage';
-import { AdminLayout } from '@/components/admin/AdminLayout';
+import LoginPage from '@/pages/auth/LoginPage';
+import { AdminLayout } from '@/pages/admin/AdminLayout';
 import { AdminDashboard } from '@/components/admin/Dashboard';
 import { EventManagement } from '@/components/admin/EventManagement';
 import { UserManagement } from '@/components/admin/UserManagement';
 import { BrigadeManagement } from '@/components/admin/BrigadeManagement';
 import { SubmissionManagement } from '@/components/admin/SubmissionManagement';
 import { Analytics } from '@/components/admin/Analytics';
-import { StudentLayout } from '@/components/student/StudentLayout';
+import { LogsPage } from '@/pages/admin/LogsPage';
+import { StudentLayout } from '@/pages/student/StudentLayout';
 import DayActivities from '@/components/student/DayActivities';
 import { MySubmissions } from '@/components/student/MySubmissions';
 import { StudentDashboard } from '@/components/student/StudentDashboard';
@@ -19,7 +20,7 @@ function App() {
   return (
     <AuthProvider>
       <Router>
-        <div className="min-h-screen bg-gray-50">
+        <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100">
           <Routes>
             <Route path="/login" element={<LoginPage />} />
             
@@ -35,6 +36,7 @@ function App() {
               <Route path="brigades" element={<BrigadeManagement />} />
               <Route path="submissions" element={<SubmissionManagement />} />
               <Route path="analytics" element={<Analytics />} />
+              <Route path="logs" element={<LogsPage />} />
             </Route>
             
             {/* Student Routes */}
