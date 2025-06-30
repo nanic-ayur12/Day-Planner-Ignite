@@ -467,10 +467,6 @@ export const AdminDashboard: React.FC = () => {
           </CardContent>
         </Card>
       </div>
-
-      {/* Sidebar Footer */}
-       
-        </div> 
-      
+    </div>
   );
 };
