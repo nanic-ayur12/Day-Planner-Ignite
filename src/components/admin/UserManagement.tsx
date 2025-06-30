@@ -177,6 +177,7 @@ export const UserManagement: React.FC = () => {
       toast({
         title: "Success!",
         description: "User created successfully. You may need to log in again.",
+        variant: "success",
       });
     } catch (error: any) {
       console.error('Error creating user:', error);
@@ -226,6 +227,7 @@ export const UserManagement: React.FC = () => {
       toast({
         title: "Success!",
         description: "User updated successfully",
+        variant: "success",
       });
     } catch (error) {
       console.error('Error updating user:', error);
@@ -309,6 +311,7 @@ export const UserManagement: React.FC = () => {
       toast({
         title: "Bulk Upload Complete",
         description: `${successCount} users created successfully. ${errorCount} failed. You may need to log in again.`,
+        variant: successCount > 0 ? "success" : "destructive",
       });
     } catch (error) {
       console.error('Error bulk uploading users:', error);
@@ -334,6 +337,7 @@ export const UserManagement: React.FC = () => {
       toast({
         title: "Success!",
         description: "User deleted successfully",
+        variant: "success",
       });
     } catch (error) {
       console.error('Error deleting user:', error);
@@ -368,6 +372,7 @@ export const UserManagement: React.FC = () => {
       toast({
         title: "Success!",
         description: `User ${!currentStatus ? 'activated' : 'deactivated'} successfully`,
+        variant: "success",
       });
     } catch (error) {
       console.error('Error updating user status:', error);

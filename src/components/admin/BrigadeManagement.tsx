@@ -103,6 +103,7 @@ export const BrigadeManagement: React.FC = () => {
       toast({
         title: "Success!",
         description: "Brigade created successfully",
+        variant: "success",
       });
     } catch (error) {
       console.error('Error creating brigade:', error);
@@ -140,6 +141,7 @@ export const BrigadeManagement: React.FC = () => {
       toast({
         title: "Success!",
         description: "Brigade updated successfully",
+        variant: "success",
       });
     } catch (error) {
       console.error('Error updating brigade:', error);
@@ -177,6 +179,7 @@ export const BrigadeManagement: React.FC = () => {
       toast({
         title: "Success!",
         description: "Brigade deleted successfully",
+        variant: "success",
       });
     } catch (error) {
       console.error('Error deleting brigade:', error);
