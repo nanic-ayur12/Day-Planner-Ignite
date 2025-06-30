@@ -428,7 +428,7 @@ export const Analytics: React.FC = () => {
                       paddingAngle={5}
                       dataKey="value"
                     >
-                      {submissionStatusData.map((entry, index) => (
+                      {submissionStatusData.map((entry, _index) => (
                         <Cell key={entry.id} fill={entry.color} />
                       ))}
                     </Pie>
@@ -479,18 +479,6 @@ export const Analytics: React.FC = () => {
                       name === 'completion' ? `${value}%` : value,
                       name === 'completion' ? 'Completion Rate' : 'Submissions'
                     ]}
-                    labelFormatter={(label, payload) => {
-                      if (payload && payload.length > 0) {
-                        const data = payload[0].payload;
-                        return (
-                          <div>
-                            <div className="font-medium">{data.fullTitle}</div>
-                            <div className="text-sm text-gray-600">{data.date} at {data.time}</div>
-                          </div>
-                        );
-                      }
-                      return label;
-                    }}
                   />
                   <Bar dataKey="completion" fill="#F97316" />
                 </BarChart>

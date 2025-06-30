@@ -13,11 +13,8 @@ import {
   Calendar, 
   Plus, 
   Edit, 
-  Trash2, 
-  Clock,
-  Users,
+  Trash2,
   FileText,
-  CheckCircle,
   AlertCircle,
   Save
 } from 'lucide-react';

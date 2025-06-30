@@ -12,10 +12,9 @@ import {
   Edit, 
   Trash2, 
   Users,
-  AlertCircle,
-  CheckCircle
+  AlertCircle
 } from 'lucide-react';
-import { collection, addDoc, getDocs, updateDoc, deleteDoc, doc, query, where } from 'firebase/firestore';
+import { collection, addDoc, getDocs, updateDoc, deleteDoc, doc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useAuth } from '@/contexts/AuthContext';
 import { Brigade, User } from '@/types';
@@ -29,7 +28,7 @@ export const BrigadeManagement: React.FC = () => {
   const [editingBrigade, setEditingBrigade] = useState<Brigade | null>(null);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-  const { userProfile } = useAuth();
+  const {  } = useAuth();
   const { toast } = useToast();
 
   const [brigadeForm, setBrigadeForm] = useState({

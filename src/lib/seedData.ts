@@ -1,7 +1,5 @@
 import { 
-  createUserWithEmailAndPassword, 
-  signInWithEmailAndPassword,
-  updatePassword 
+  createUserWithEmailAndPassword
 } from 'firebase/auth';
 import { 
   doc, 
@@ -14,7 +12,7 @@ import {
   where 
 } from 'firebase/firestore';
 import { auth, db } from './firebase';
-import { User, Event, EventPlan, Brigade, Submission } from '@/types';
+import { User, Event, Brigade } from '@/types';
 
 export const seedDatabase = async () => {
   try {

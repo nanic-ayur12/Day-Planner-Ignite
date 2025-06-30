@@ -13,13 +13,12 @@ import {
   Search, 
   Filter,
   Calendar,
-  User,
   Clock,
   CheckCircle,
   AlertCircle,
   XCircle
 } from 'lucide-react';
-import { collection, getDocs, query, where, orderBy } from 'firebase/firestore';
+import { collection, getDocs } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Submission, User as UserType, EventPlan, Event } from '@/types';
 
@@ -29,7 +28,7 @@ export const SubmissionManagement: React.FC = () => {
     eventPlanTitle?: string; 
     eventName?: string;
   })[]>([]);
-  const [users, setUsers] = useState<UserType[]>([]);
+  const [_users, setUsers] = useState<UserType[]>([]);
   const [eventPlans, setEventPlans] = useState<EventPlan[]>([]);
   const [events, setEvents] = useState<Event[]>([]);
   const [loading, setLoading] = useState(false);
